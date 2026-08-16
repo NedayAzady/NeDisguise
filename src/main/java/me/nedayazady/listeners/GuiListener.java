@@ -29,23 +29,31 @@ public class GuiListener implements Listener {
     public void onInventoryClick(InventoryClickEvent event) {
         if (!(event.getWhoClicked() instanceof Player)) return;
         Player player = (Player) event.getWhoClicked();
-        String title = event.getInventory().getTitle();
-        ItemStack currentItem = event.getCurrentItem();
+        
+        String title = ChatColor.stripColor(event.getView().getTitle());
+        if (title == null) return;
 
+        String rankTitle = ChatColor.stripColor(plugin.color(plugin.getConfig().getString("gui.ranks.title")));
+        String skinTitle = ChatColor.stripColor(plugin.color(plugin.getConfig().getString("gui.skins.title")));
+        String confirmTitle = ChatColor.stripColor(plugin.color(plugin.getConfig().getString("gui.confirm.title")));
+
+        boolean isDisguiseGui = title.equals(rankTitle) || title.equals(skinTitle) || title.equals(confirmTitle);
+        if (!isDisguiseGui) return;
+
+        event.setCancelled(true);
+
+        if (event.getRawSlot() >= event.getInventory().getSize() || event.getRawSlot() < 0) {
+            return; // Clicked outside or in player inventory
+        }
+
+        ItemStack currentItem = event.getCurrentItem();
         if (currentItem == null || currentItem.getType() == Material.AIR) return;
 
-        String rankTitle = plugin.color(plugin.getConfig().getString("gui.ranks.title"));
-        String skinTitle = plugin.color(plugin.getConfig().getString("gui.skins.title"));
-        String confirmTitle = plugin.color(plugin.getConfig().getString("gui.confirm.title"));
-
         if (title.equals(rankTitle)) {
-            event.setCancelled(true);
             handleRankSelection(player, currentItem);
         } else if (title.equals(skinTitle)) {
-            event.setCancelled(true);
             handleSkinSelection(player, currentItem);
         } else if (title.equals(confirmTitle)) {
-            event.setCancelled(true);
             handleConfirmation(player, currentItem);
         }
     }

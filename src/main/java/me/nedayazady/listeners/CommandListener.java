@@ -6,7 +6,9 @@ import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
 import org.bukkit.event.player.PlayerCommandPreprocessEvent;
+import org.bukkit.event.server.TabCompleteEvent;
 
+import java.util.ArrayList;
 import java.util.List;
 
 public class CommandListener implements Listener {
@@ -41,6 +43,28 @@ public class CommandListener implements Listener {
                 plugin.getGuiManager().openRankSelectionGui(player);
                 break;
             }
+        }
+    }
+
+    @EventHandler
+    public void onTabComplete(TabCompleteEvent event) {
+        String buffer = event.getBuffer().toLowerCase();
+        if (!buffer.startsWith("/")) return;
+        
+        String command = buffer.split(" ")[0].substring(1);
+        
+        List<String> aliases = plugin.getConfig().getStringList("commands");
+        List<String> completions = new ArrayList<>();
+        
+        for (String alias : aliases) {
+            String checkAlias = alias.startsWith("/") ? alias.substring(1) : alias;
+            if (checkAlias.startsWith(command)) {
+                completions.add("/" + checkAlias);
+            }
+        }
+        
+        if (!completions.isEmpty() && buffer.split(" ").length == 1) {
+            event.setCompletions(completions);
         }
     }
 }
