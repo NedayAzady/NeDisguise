@@ -1,0 +1,9 @@
+name: NeDisguise
+version: 1.0
+main: me.nedayazady.NeDisguise
+api-version: 1.13
+depend: [LuckPerms]
+commands:
+  disguise:
+    description: Opens the disguise GUI
+    aliases: [nick]

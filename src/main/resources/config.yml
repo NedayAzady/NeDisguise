@@ -1,0 +1,83 @@
+# NeDisguise Configuration
+
+permission: "disguise.perm"
+
+commands:
+  - "/disguise"
+  - "/nick"
+
+mysql:
+  enabled: false
+  host: "localhost"
+  port: 3306
+  database: "disguise"
+  username: "root"
+  password: ""
+
+messages:
+  no_permission: "&cYou do not have permission to use this command."
+  disguised: "&aYou are now disguised as {name} with the {rank} rank!"
+  undisguised: "&eYour disguise has been removed."
+  cancel_disguise: "&cDisguise cancelled."
+  type_name_in_chat: "&ePlease type your desired disguise name in the chat (or type 'cancel' to cancel):"
+  name_too_long: "&cName must be 16 characters or less."
+  invalid_name: "&cInvalid name format. Use alphanumeric characters and underscores."
+
+gui:
+  ranks:
+    title: "&8Select Disguise Rank"
+    size: 54
+    next_button:
+      material: EMERALD_BLOCK
+      name: "&aNext Page"
+      slot: 53
+    cancel_button:
+      material: REDSTONE_BLOCK
+      name: "&cCancel"
+      slot: 45
+    # Default ranks mapping to LuckPerms
+    # The plugin will fetch prefix/suffix from LuckPerms for these groups
+    groups:
+      - "default"
+      - "vip"
+      - "pro"
+      - "mvp"
+      - "ace"
+    rank_item:
+      material: PAPER
+      name: "{prefix} {group_name}"
+      lore:
+        - "&7Click to select this rank"
+  
+  skins:
+    title: "&8Select Disguise Skin"
+    size: 54
+    custom_name_button:
+      material: NAME_TAG
+      name: "&eCustom Name"
+      lore:
+        - "&7Click to enter a custom name"
+      slot: 49
+    available_skins:
+      - name: "Notch"
+        texture: "ewogICJ0aW1lc3RhbXAiIDogMTYzNzIwNDY3NTU1OCwKICAicHJvZmlsZUlkIiA6ICIwNjlhNzlmNDQ0ZTk0NzI2YTViZWZjY2JmMjc2MmZkMyIsCiAgInByb2ZpbGVOYW1lIiA6ICJOb3RjaCIsCiAgInNpZ25hdHVyZVJlcXVpcmVkIiA6IHRydWUsCiAgInRleHR1cmVzIiA6IHsKICAgICJTS0lOIiA6IHsKICAgICAgInVybCIgOiAiaHR0cDovL3RleHR1cmVzLm1pbmVjcmFmdC5uZXQvdGV4dHVyZS8yOTIwMDlhNDkyNWI1OGYwMmM3N2RhZGMzZWNlZjA3ZWE0Yzc0NzJmNjRlMGZkYzMyY2U1NTIyNDg5MzYyNjgwIgogICAgfQogIH0KfQ=="
+      - name: "Dinnerbone"
+        texture: "ewogICJ0aW1lc3RhbXAiIDogMTYzNzIwNDcwNDAyNSwKICAicHJvZmlsZUlkIiA6ICI2MTZlMjk3ZTc5NDI0MjdiODZhYmI4YjczMzc4NTFkMCIsCiAgInByb2ZpbGVOYW1lIiA6ICJEaW5uZXJib25lIiwKICAic2lnbmF0dXJlUmVxdWlyZWQiIDogdHJ1ZSwKICAidGV4dHVyZXMiIDogewogICAgIlNLSU4iIDogewogICAgICAidXJsIiA6ICJodHRwOi8vdGV4dHVyZXMubWluZWNyYWZ0Lm5ldC90ZXh0dXJlLzFmNGVlODZkNjY5OTkxNWRmOGFmMjk2NmQ2YmNjMDNlMjk2MjIzZjM1ZGMzNzZiNTQ3NmVhOTkyNzRiM2EzYmMiCiAgICB9CiAgfQp9"
+
+  confirm:
+    title: "&8Confirm Disguise"
+    size: 54
+    confirm_button:
+      material: EMERALD_BLOCK
+      name: "&aDisguise"
+      slot: 31
+    cancel_button:
+      material: REDSTONE_BLOCK
+      name: "&cCancel"
+      slot: 30
+
+sounds:
+  click: "UI_BUTTON_CLICK"
+  success: "ENTITY_PLAYER_LEVELUP"
+  error: "ENTITY_VILLAGER_NO"
+  cancel: "BLOCK_NOTE_BLOCK_BASS"
