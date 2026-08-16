@@ -183,10 +183,20 @@ public class GuiManager {
         }
 
         ConfigurationSection customBtn = config.getConfigurationSection("custom_name_button");
-        inv.setItem(customBtn.getInt("slot"), new ItemBuilder(Material.valueOf(customBtn.getString("material")))
-                .name(plugin.color(customBtn.getString("name")))
-                .lore(customBtn.getStringList("lore").stream().map(plugin::color).collect(Collectors.toList()))
-                .build());
+        if (customBtn != null) {
+            inv.setItem(customBtn.getInt("slot"), new ItemBuilder(Material.valueOf(customBtn.getString("material")))
+                    .name(plugin.color(customBtn.getString("name")))
+                    .lore(customBtn.getStringList("lore").stream().map(plugin::color).collect(Collectors.toList()))
+                    .build());
+        }
+        
+        ConfigurationSection randomBtn = config.getConfigurationSection("random_name_button");
+        if (randomBtn != null) {
+            inv.setItem(randomBtn.getInt("slot"), new ItemBuilder(Material.valueOf(randomBtn.getString("material", "COMMAND")))
+                    .name(plugin.color(randomBtn.getString("name", "&dRandom Name")))
+                    .lore(randomBtn.getStringList("lore").stream().map(plugin::color).collect(Collectors.toList()))
+                    .build());
+        }
 
         fillGui(inv, config);
         player.openInventory(inv);
