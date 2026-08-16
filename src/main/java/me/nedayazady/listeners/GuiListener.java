@@ -19,6 +19,7 @@ import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Map;
 
 public class GuiListener implements Listener {
 
@@ -210,9 +211,31 @@ public class GuiListener implements Listener {
         if (item.getType() == Material.SKULL_ITEM) {
             DisguiseData data = plugin.getGuiManager().sessionData.get(player.getUniqueId());
             if (data != null) {
-                data.setName(displayName);
-                // In a real implementation you would extract the texture string from the skull meta
-                data.setSkin("texture_placeholder"); 
+                // If they clicked random, generate a random name and pick a random skin
+                if (displayName.contains("Random Name")) {
+                    String[] prefixes = {"Pro", "Noob", "xX", "The", "Epic", "Dark", "Ghost", "Ninja", "Super", "Mega", "Ultra"};
+                    String[] suffixes = {"Gamer", "PVP", "Slayer", "Craft", "Boy", "Girl", "HD", "YT", "MC", "King", "Beast"};
+                    String prefix = prefixes[(int) (Math.random() * prefixes.length)];
+                    String suffix = suffixes[(int) (Math.random() * suffixes.length)];
+                    String randomName = prefix + suffix + (int)(Math.random() * 99);
+                    
+                    data.setName(randomName);
+                    
+                    // Assign random texture from config
+                    List<Map<?, ?>> skins = plugin.getConfig().getMapList("gui.skins.available_skins");
+                    if (skins.size() > 1) {
+                        Map<?, ?> randomSkin = skins.get(1 + (int)(Math.random() * (skins.size() - 1))); // skip the first one which is random button
+                        data.setSkin((String) randomSkin.get("texture"));
+                    } else {
+                        data.setSkin("texture_placeholder");
+                    }
+                } else {
+                    data.setName(displayName);
+                    // Get texture from the clicked item if possible, otherwise placeholder
+                    // In a more robust system you'd map the name to the config texture here
+                    data.setSkin("texture_placeholder"); 
+                }
+                
                 playSoundSafe(player, plugin.getConfig().getString("sounds.click", "CLICK"));
                 plugin.getGuiManager().openConfirmGui(player);
             }
@@ -296,6 +319,9 @@ public class GuiListener implements Listener {
                 player.sendMessage(plugin.color(msg));
                 playSoundSafe(player, plugin.getConfig().getString("sounds.success", "LEVEL_UP"));
                 
+                // Reset pages for next time
+                plugin.getGuiManager().rankPage.put(player.getUniqueId(), 1);
+                plugin.getGuiManager().skinPage.put(player.getUniqueId(), 1);
                 plugin.getGuiManager().sessionData.remove(player.getUniqueId());
             }
         }
