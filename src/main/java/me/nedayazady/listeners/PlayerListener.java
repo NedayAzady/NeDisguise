@@ -26,15 +26,17 @@ public class PlayerListener implements Listener {
     @EventHandler
     public void onPlayerJoin(PlayerJoinEvent event) {
         Player player = event.getPlayer();
-        // Load data on join
-        plugin.getDatabaseManager().getDisguiseData(player.getUniqueId()).thenAccept(data -> {
-            if (data != null && data.getName() != null) {
-                // Apply disguise logic here
-                Bukkit.getScheduler().runTask(plugin, () -> {
-                    changeName(player, data.getName());
-                });
-            }
-        });
+        // Delay fetching and applying disguise to allow TAB/NTE to initialize their scoreboards first
+        Bukkit.getScheduler().runTaskLater(plugin, () -> {
+            plugin.getDatabaseManager().getDisguiseData(player.getUniqueId()).thenAccept(data -> {
+                if (data != null && data.getName() != null && data.getRank() != null) {
+                    // Apply disguise logic here on main thread
+                    Bukkit.getScheduler().runTask(plugin, () -> {
+                        changeName(player, data.getName(), data.getRank());
+                    });
+                }
+            });
+        }, 20L);
     }
 
     @EventHandler
@@ -43,7 +45,7 @@ public class PlayerListener implements Listener {
         plugin.getGuiManager().sessionData.remove(event.getPlayer().getUniqueId());
     }
     
-    private void changeName(Player player, String newName) {
+    public void changeName(Player player, String newName, String rank) {
         try {
             Method getHandle = player.getClass().getMethod("getHandle");
             Object entityPlayer = getHandle.invoke(player);
@@ -61,7 +63,7 @@ public class PlayerListener implements Listener {
             // Execute configured commands to update TAB/Tags plugins
             List<String> commands = plugin.getConfig().getStringList("on_disguise_commands");
             for (String cmd : commands) {
-                String formattedCmd = cmd.replace("{player}", player.getName()).replace("{name}", newName);
+                String formattedCmd = cmd.replace("{player}", player.getName()).replace("{name}", newName).replace("{rank}", rank);
                 Bukkit.getServer().dispatchCommand(Bukkit.getConsoleSender(), formattedCmd);
             }
             
@@ -69,10 +71,10 @@ public class PlayerListener implements Listener {
             for (Player p : Bukkit.getOnlinePlayers()) {
                 if (p != player) {
                     p.hidePlayer(player);
-                    // Add a slight delay before showing to ensure client clears cache
+                    // Extremely short delay to force client update instantly
                     Bukkit.getScheduler().runTaskLater(plugin, () -> {
                         p.showPlayer(player);
-                    }, 2L);
+                    }, 1L);
                 }
             }
             
@@ -80,7 +82,7 @@ public class PlayerListener implements Listener {
             player.hidePlayer(player);
             Bukkit.getScheduler().runTaskLater(plugin, () -> {
                 player.showPlayer(player);
-            }, 2L);
+            }, 1L);
             
         } catch (Exception e) {
             e.printStackTrace();

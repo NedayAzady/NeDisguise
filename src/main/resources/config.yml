@@ -52,6 +52,13 @@ gui:
       material: BOOK
       name: "&ePage {page}/{max}"
       slot: 49
+    unnick_button:
+      material: BARRIER
+      name: "&cReset Disguise"
+      lore:
+        - "&7Click to remove your"
+        - "&7current disguise."
+      slot: 4
     cancel_button:
       material: REDSTONE_BLOCK
       name: "&cCancel"

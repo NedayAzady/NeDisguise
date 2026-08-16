@@ -80,10 +80,33 @@ public class GuiListener implements Listener {
         Material nextMat = Material.valueOf(plugin.getConfig().getString("gui.ranks.next_button.material", "ARROW"));
         Material prevMat = Material.valueOf(plugin.getConfig().getString("gui.ranks.previous_button.material", "ARROW"));
         Material cancelMat = Material.valueOf(plugin.getConfig().getString("gui.ranks.cancel_button.material"));
+        Material unnickMat = Material.valueOf(plugin.getConfig().getString("gui.ranks.unnick_button.material", "BARRIER"));
         
         String nextName = ChatColor.stripColor(plugin.color(plugin.getConfig().getString("gui.ranks.next_button.name", "Next")));
         String prevName = ChatColor.stripColor(plugin.color(plugin.getConfig().getString("gui.ranks.previous_button.name", "Previous")));
         String cancelName = ChatColor.stripColor(plugin.color(plugin.getConfig().getString("gui.ranks.cancel_button.name")));
+        String unnickName = ChatColor.stripColor(plugin.color(plugin.getConfig().getString("gui.ranks.unnick_button.name", "Reset Disguise")));
+
+        if (item.getType() == unnickMat && displayName.contains(unnickName)) {
+            player.closeInventory();
+            playSoundSafe(player, plugin.getConfig().getString("sounds.success", "LEVEL_UP"));
+            plugin.getGuiManager().sessionData.remove(player.getUniqueId());
+            plugin.getDatabaseManager().removeDisguiseData(player.getUniqueId());
+            
+            // Execute configured commands to update TAB/Tags plugins
+            List<String> commands = plugin.getConfig().getStringList("on_undisguise_commands");
+            for (String cmd : commands) {
+                String formattedCmd = cmd.replace("{player}", player.getName());
+                Bukkit.getServer().dispatchCommand(Bukkit.getConsoleSender(), formattedCmd);
+            }
+            
+            // Revert name visually using the PlayerListener instance method to keep it central
+            // Pass empty string for rank since it's an unnick
+            PlayerListener playerListener = new PlayerListener(plugin);
+            playerListener.changeName(player, player.getName(), "");
+            player.sendMessage(plugin.color(plugin.getConfig().getString("messages.undisguised")));
+            return;
+        }
 
         if (item.getType() == cancelMat && displayName.contains(cancelName)) {
             player.closeInventory();
@@ -298,50 +321,6 @@ public class GuiListener implements Listener {
         }
     }
     
-    private void changeName(Player player, String newName) {
-        try {
-            Method getHandle = player.getClass().getMethod("getHandle");
-            Object entityPlayer = getHandle.invoke(player);
-            
-            Object gameProfile = entityPlayer.getClass().getMethod("getProfile").invoke(entityPlayer);
-            Field nameField = gameProfile.getClass().getDeclaredField("name");
-            nameField.setAccessible(true);
-            nameField.set(gameProfile, newName);
-            
-            player.setDisplayName(newName);
-            player.setPlayerListName(newName);
-            player.setCustomName(newName);
-            player.setCustomNameVisible(true);
-            
-            // Execute configured commands to update TAB/Tags plugins
-            List<String> commands = plugin.getConfig().getStringList("on_disguise_commands");
-            for (String cmd : commands) {
-                String formattedCmd = cmd.replace("{player}", player.getName()).replace("{name}", newName);
-                Bukkit.getServer().dispatchCommand(Bukkit.getConsoleSender(), formattedCmd);
-            }
-            
-            // Reload the player for others to update tab and nametags properly
-            for (Player p : Bukkit.getOnlinePlayers()) {
-                if (p != player) {
-                    p.hidePlayer(player);
-                    // Add a slight delay before showing to ensure client clears cache
-                    Bukkit.getScheduler().runTaskLater(plugin, () -> {
-                        p.showPlayer(player);
-                    }, 2L);
-                }
-            }
-            
-            // Force self update
-            player.hidePlayer(player);
-            Bukkit.getScheduler().runTaskLater(plugin, () -> {
-                player.showPlayer(player);
-            }, 2L);
-            
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-    }
-
     private void handleConfirmation(Player player, ItemStack item) {
         ItemMeta meta = item.getItemMeta();
         if (meta == null || !meta.hasDisplayName()) return;
@@ -371,7 +350,8 @@ public class GuiListener implements Listener {
                         .replace("{name}", data.getName())
                         .replace("{rank}", data.getRank());
                 
-                changeName(player, data.getName());
+                PlayerListener playerListener = new PlayerListener(plugin);
+                playerListener.changeName(player, data.getName(), data.getRank());
                 player.sendMessage(plugin.color(msg));
                 playSoundSafe(player, plugin.getConfig().getString("sounds.success", "LEVEL_UP"));
                 

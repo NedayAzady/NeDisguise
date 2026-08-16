@@ -106,6 +106,14 @@ public class GuiManager {
             inv.setItem(pageBtn.getInt("slot"), new ItemBuilder(Material.valueOf(pageBtn.getString("material"))).name(pageName).build());
         }
 
+        ConfigurationSection unnickBtn = config.getConfigurationSection("unnick_button");
+        if (unnickBtn != null) {
+            inv.setItem(unnickBtn.getInt("slot"), new ItemBuilder(Material.valueOf(unnickBtn.getString("material", "BARRIER")))
+                    .name(plugin.color(unnickBtn.getString("name", "&cReset Disguise")))
+                    .lore(unnickBtn.getStringList("lore").stream().map(plugin::color).collect(Collectors.toList()))
+                    .build());
+        }
+
         ConfigurationSection cancelBtn = config.getConfigurationSection("cancel_button");
         inv.setItem(cancelBtn.getInt("slot"), new ItemBuilder(Material.valueOf(cancelBtn.getString("material")))
                 .name(plugin.color(cancelBtn.getString("name"))).build());
