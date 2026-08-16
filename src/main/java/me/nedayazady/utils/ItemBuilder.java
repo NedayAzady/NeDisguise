@@ -40,8 +40,16 @@ public class ItemBuilder {
         return this;
     }
 
+    public ItemBuilder setSkullOwner(String owner) {
+        if (item.getType() != Material.SKULL_ITEM) return this;
+        SkullMeta skullMeta = (SkullMeta) meta;
+        skullMeta.setOwner(owner);
+        return this;
+    }
+
     public ItemBuilder setSkullTexture(String texture) {
         if (item.getType() != Material.SKULL_ITEM) return this;
+        if (texture == null || texture.isEmpty()) return this;
         
         SkullMeta skullMeta = (SkullMeta) meta;
         GameProfile profile = new GameProfile(UUID.randomUUID(), null);

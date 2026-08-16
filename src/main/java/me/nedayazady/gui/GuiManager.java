@@ -193,6 +193,10 @@ public class GuiManager {
     }
 
     public void openConfirmGui(Player player) {
+        // Reset pages back to 1 for the next time they open the GUI
+        rankPage.put(player.getUniqueId(), 1);
+        skinPage.put(player.getUniqueId(), 1);
+        
         ConfigurationSection config = plugin.getConfig().getConfigurationSection("gui.confirm");
         String title = plugin.color(config.getString("title"));
         int size = config.getInt("size");

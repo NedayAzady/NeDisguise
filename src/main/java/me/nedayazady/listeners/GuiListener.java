@@ -140,6 +140,9 @@ public class GuiListener implements Listener {
         Material customMat = Material.valueOf(plugin.getConfig().getString("gui.skins.custom_name_button.material"));
         String customNameStr = ChatColor.stripColor(plugin.color(plugin.getConfig().getString("gui.skins.custom_name_button.name")));
         
+        Material randomMat = Material.valueOf(plugin.getConfig().getString("gui.skins.random_name_button.material", "COMMAND"));
+        String randomNameStr = ChatColor.stripColor(plugin.color(plugin.getConfig().getString("gui.skins.random_name_button.name", "Random Name")));
+        
         Material nextMat = Material.valueOf(plugin.getConfig().getString("gui.skins.next_button.material", "ARROW"));
         Material prevMat = Material.valueOf(plugin.getConfig().getString("gui.skins.previous_button.material", "ARROW"));
         Material backMat = Material.valueOf(plugin.getConfig().getString("gui.skins.back_button.material", "BARRIER"));
@@ -167,6 +170,43 @@ public class GuiListener implements Listener {
         if (item.getType() == backMat && displayName.contains(backName)) {
             playSoundSafe(player, plugin.getConfig().getString("sounds.click", "CLICK"));
             plugin.getGuiManager().openRankSelectionGui(player);
+            return;
+        }
+
+        if (item.getType() == randomMat && displayName.contains(randomNameStr)) {
+            player.closeInventory();
+            playSoundSafe(player, plugin.getConfig().getString("sounds.click", "CLICK"));
+            
+            // Get random name and skin
+            java.util.List<java.util.Map<?, ?>> skins = plugin.getConfig().getMapList("gui.skins.available_skins");
+            
+            // Filter out the random button from the list itself if it's there
+            java.util.List<java.util.Map<?, ?>> actualSkins = new java.util.ArrayList<>();
+            for (java.util.Map<?, ?> skinMap : skins) {
+                if (!skinMap.containsKey("is_random") || !(Boolean)skinMap.get("is_random")) {
+                    actualSkins.add(skinMap);
+                }
+            }
+            
+            if (!actualSkins.isEmpty()) {
+                int randomIndex = new java.util.Random().nextInt(actualSkins.size());
+                java.util.Map<?, ?> randomSkin = actualSkins.get(randomIndex);
+                
+                String generatedName = (String) randomSkin.get("name");
+                String generatedTexture = (String) randomSkin.get("texture");
+                
+                // Add a random number to make names unique if desired, or keep as is
+                // generatedName = generatedName + new java.util.Random().nextInt(999);
+                
+                DisguiseData data = plugin.getGuiManager().sessionData.get(player.getUniqueId());
+                if (data != null) {
+                    data.setName(generatedName);
+                    data.setSkin(generatedTexture);
+                    Bukkit.getScheduler().runTask(plugin, () -> plugin.getGuiManager().openConfirmGui(player));
+                }
+            } else {
+                player.sendMessage(plugin.color("&cNo skins configured for randomizer."));
+            }
             return;
         }
 
@@ -213,8 +253,8 @@ public class GuiListener implements Listener {
             if (data != null) {
                 // If they clicked random, generate a random name and pick a random skin
                 if (displayName.contains("Random Name")) {
-                    String[] prefixes = {"Pro", "Noob", "xX", "The", "Epic", "Dark", "Ghost", "Ninja", "Super", "Mega", "Ultra"};
-                    String[] suffixes = {"Gamer", "PVP", "Slayer", "Craft", "Boy", "Girl", "HD", "YT", "MC", "King", "Beast"};
+                    String[] prefixes = {"Pro", "Noob", "xX", "The", "Epic", "Dark", "Ghost", "Ninja", "Super", "Mega", "Ultra", "Fast", "Iron", "Gold"};
+                    String[] suffixes = {"Gamer", "PVP", "Slayer", "Craft", "Boy", "Girl", "HD", "YT", "MC", "King", "Beast", "Master", "Lord"};
                     String prefix = prefixes[(int) (Math.random() * prefixes.length)];
                     String suffix = suffixes[(int) (Math.random() * suffixes.length)];
                     String randomName = prefix + suffix + (int)(Math.random() * 99);
@@ -223,17 +263,31 @@ public class GuiListener implements Listener {
                     
                     // Assign random texture from config
                     List<Map<?, ?>> skins = plugin.getConfig().getMapList("gui.skins.available_skins");
-                    if (skins.size() > 1) {
-                        Map<?, ?> randomSkin = skins.get(1 + (int)(Math.random() * (skins.size() - 1))); // skip the first one which is random button
+                    // Collect valid skins (not the random button itself)
+                    java.util.List<Map<?, ?>> actualSkins = new java.util.ArrayList<>();
+                    for (Map<?, ?> skinMap : skins) {
+                        if (!skinMap.containsKey("is_random") || !(Boolean)skinMap.get("is_random")) {
+                            actualSkins.add(skinMap);
+                        }
+                    }
+                    if (!actualSkins.isEmpty()) {
+                        Map<?, ?> randomSkin = actualSkins.get(new java.util.Random().nextInt(actualSkins.size()));
                         data.setSkin((String) randomSkin.get("texture"));
                     } else {
                         data.setSkin("texture_placeholder");
                     }
                 } else {
                     data.setName(displayName);
-                    // Get texture from the clicked item if possible, otherwise placeholder
-                    // In a more robust system you'd map the name to the config texture here
-                    data.setSkin("texture_placeholder"); 
+                    // Get texture from the clicked item
+                    String foundTexture = "texture_placeholder";
+                    List<Map<?, ?>> skins = plugin.getConfig().getMapList("gui.skins.available_skins");
+                    for (Map<?, ?> skinInfo : skins) {
+                        if (skinInfo.get("name").equals(displayName)) {
+                            foundTexture = (String) skinInfo.get("texture");
+                            break;
+                        }
+                    }
+                    data.setSkin(foundTexture); 
                 }
                 
                 playSoundSafe(player, plugin.getConfig().getString("sounds.click", "CLICK"));
