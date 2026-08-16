@@ -93,14 +93,14 @@ gui:
       name: "&eCustom Name"
       lore:
         - "&7Click to enter a custom name"
-      slot: 1
+      slot: 53
     random_name_button:
       material: COMMAND
       name: "&dRandom Nickname & Skin"
       lore:
         - "&7Click to get a completely"
         - "&7random nickname and skin!"
-      slot: 2
+      slot: 0
     available_skins:
       - name: "Random Name & Skin"
         texture: "ewogICJ0aW1lc3RhbXAiIDogMTYzNzIwNDY3NTU1OCwKICAicHJvZmlsZUlkIiA6ICIwNjlhNzlmNDQ0ZTk0NzI2YTViZWZjY2JmMjc2MmZkMyIsCiAgInByb2ZpbGVOYW1lIiA6ICJOb3RjaCIsCiAgInNpZ25hdHVyZVJlcXVpcmVkIiA6IHRydWUsCiAgInRleHR1cmVzIiA6IHsKICAgICJTS0lOIiA6IHsKICAgICAgInVybCIgOiAiaHR0cDovL3RleHR1cmVzLm1pbmVjcmFmdC5uZXQvdGV4dHVyZS83ZWVjOTlhMzRlYzEyMmI2M2Q1NDQ1ODQ3MGZhMjc2NTM1NTQ2NTFlNWU0Y2EyMzk1YmIwZTIzYWNjNTc5MWM4IgogICAgfQogIH0KfQ=="
