@@ -91,12 +91,21 @@ public class GuiListener implements Listener {
             player.closeInventory();
             playSoundSafe(player, plugin.getConfig().getString("sounds.success", "LEVEL_UP"));
             plugin.getGuiManager().sessionData.remove(player.getUniqueId());
+            
+            // Try to get original name before we delete the data
+            String originalName = player.getName();
+            try {
+                DisguiseData dbData = plugin.getDatabaseManager().getDisguiseData(player.getUniqueId()).get();
+                if (dbData != null && dbData.getRealName() != null) {
+                    originalName = dbData.getRealName();
+                }
+            } catch (Exception ignored) {}
+            
             plugin.getDatabaseManager().removeDisguiseData(player.getUniqueId());
             
             // Execute configured commands to update TAB/Tags plugins
             List<String> commands = plugin.getConfig().getStringList("on_undisguise_commands");
             for (String cmd : commands) {
-                String originalName = player.getName();
                 String formattedCmd = cmd.replace("{player}", originalName);
                 Bukkit.getServer().dispatchCommand(Bukkit.getConsoleSender(), formattedCmd);
             }
@@ -104,7 +113,7 @@ public class GuiListener implements Listener {
             // Revert name visually using the PlayerListener instance method to keep it central
             // Pass empty string for rank since it's an unnick
             PlayerListener playerListener = new PlayerListener(plugin);
-            playerListener.changeName(player, player.getName(), "");
+            playerListener.changeName(player, originalName, "");
             player.sendMessage(plugin.color(plugin.getConfig().getString("messages.undisguised")));
             return;
         }
@@ -345,6 +354,10 @@ public class GuiListener implements Listener {
             DisguiseData data = plugin.getGuiManager().sessionData.get(player.getUniqueId());
             if (data != null && data.getName() != null && data.getRank() != null) {
                 player.closeInventory();
+                
+                // Set their original real name before saving
+                data.setRealName(player.getName());
+                
                 plugin.getDatabaseManager().saveDisguiseData(player.getUniqueId(), data);
                 
                 String msg = plugin.getConfig().getString("messages.disguised")

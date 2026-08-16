@@ -30,6 +30,11 @@ public class PlayerListener implements Listener {
         Bukkit.getScheduler().runTaskLater(plugin, () -> {
             plugin.getDatabaseManager().getDisguiseData(player.getUniqueId()).thenAccept(data -> {
                 if (data != null && data.getName() != null && data.getRank() != null) {
+                    // Update their real name in memory if it was missing (from older versions)
+                    if (data.getRealName() == null) {
+                        data.setRealName(player.getName());
+                    }
+                    
                     // Apply disguise logic here on main thread
                     Bukkit.getScheduler().runTask(plugin, () -> {
                         changeName(player, data.getName(), data.getRank());
@@ -71,7 +76,16 @@ public class PlayerListener implements Listener {
             for (String cmd : commands) {
                 // Ensure we use the real original name of the player for console commands,
                 // as plugins usually index players by their real name/UUID, not their nick.
+                // In un-nick scenarios where we pass player.getName() as newName, their current name 
+                // in memory IS their original name. But if we have it saved, use it.
                 String originalName = player.getName(); 
+                try {
+                    DisguiseData dbData = plugin.getDatabaseManager().getDisguiseData(player.getUniqueId()).get();
+                    if (dbData != null && dbData.getRealName() != null) {
+                        originalName = dbData.getRealName();
+                    }
+                } catch (Exception ignored) {}
+                
                 String formattedCmd = cmd.replace("{player}", originalName).replace("{name}", newName);
                 Bukkit.getServer().dispatchCommand(Bukkit.getConsoleSender(), formattedCmd);
             }

@@ -67,11 +67,19 @@ public class DatabaseManager {
              PreparedStatement ps = connection.prepareStatement(
                      "CREATE TABLE IF NOT EXISTS disguise_data (" +
                              "uuid VARCHAR(36) PRIMARY KEY," +
+                             "real_name VARCHAR(16)," +
                              "disguise_name VARCHAR(16)," +
                              "rank_group VARCHAR(32)," +
                              "skin_texture TEXT" +
                              ")")) {
             ps.execute();
+            
+            // Try to add the column if it doesn't exist (for existing tables)
+            try (PreparedStatement alter = connection.prepareStatement(
+                    "ALTER TABLE disguise_data ADD COLUMN real_name VARCHAR(16) AFTER uuid")) {
+                alter.execute();
+            } catch (SQLException ignored) {}
+            
         } catch (SQLException e) {
             e.printStackTrace();
         }
@@ -85,7 +93,14 @@ public class DatabaseManager {
                     ps.setString(1, uuid.toString());
                     try (ResultSet rs = ps.executeQuery()) {
                         if (rs.next()) {
+                            // Support for older rows that might not have real_name set yet
+                            String realName = null;
+                            try {
+                                realName = rs.getString("real_name");
+                            } catch (SQLException ignored) {}
+                            
                             return new DisguiseData(
+                                    realName,
                                     rs.getString("disguise_name"),
                                     rs.getString("rank_group"),
                                     rs.getString("skin_texture")
@@ -99,6 +114,7 @@ public class DatabaseManager {
                 String path = uuid.toString();
                 if (yamlConfig.contains(path)) {
                     return new DisguiseData(
+                            yamlConfig.getString(path + ".realName"),
                             yamlConfig.getString(path + ".name"),
                             yamlConfig.getString(path + ".rank"),
                             yamlConfig.getString(path + ".skin")
@@ -114,17 +130,19 @@ public class DatabaseManager {
             if (useMysql) {
                 try (Connection connection = dataSource.getConnection();
                      PreparedStatement ps = connection.prepareStatement(
-                             "REPLACE INTO disguise_data (uuid, disguise_name, rank_group, skin_texture) VALUES (?, ?, ?, ?)")) {
+                             "REPLACE INTO disguise_data (uuid, real_name, disguise_name, rank_group, skin_texture) VALUES (?, ?, ?, ?, ?)")) {
                     ps.setString(1, uuid.toString());
-                    ps.setString(2, data.getName());
-                    ps.setString(3, data.getRank());
-                    ps.setString(4, data.getSkin());
+                    ps.setString(2, data.getRealName());
+                    ps.setString(3, data.getName());
+                    ps.setString(4, data.getRank());
+                    ps.setString(5, data.getSkin());
                     ps.executeUpdate();
                 } catch (SQLException e) {
                     e.printStackTrace();
                 }
             } else {
                 String path = uuid.toString();
+                yamlConfig.set(path + ".realName", data.getRealName());
                 yamlConfig.set(path + ".name", data.getName());
                 yamlConfig.set(path + ".rank", data.getRank());
                 yamlConfig.set(path + ".skin", data.getSkin());

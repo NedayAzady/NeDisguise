@@ -122,7 +122,7 @@ public class GuiManager {
         player.openInventory(inv);
         
         // Initialize session if empty
-        sessionData.putIfAbsent(player.getUniqueId(), new DisguiseData(null, null, null));
+        sessionData.putIfAbsent(player.getUniqueId(), new DisguiseData(player.getName(), null, null, null));
     }
 
     public void openSkinSelectionGui(Player player) {
