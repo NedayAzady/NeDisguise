@@ -147,8 +147,16 @@ public class GuiManager {
             
             // SKULL_ITEM with data 3 is player head in 1.8
             ItemBuilder head = new ItemBuilder(Material.SKULL_ITEM, 1, (short) 3)
-                    .name(plugin.color("&e" + name))
-                    .setSkullTexture(texture);
+                    .name(plugin.color("&e" + name));
+            
+            // If the map has "is_random": true, we might not set a texture, or set a specific one
+            if (skinInfo.containsKey("is_random") && (Boolean)skinInfo.get("is_random")) {
+               if (texture != null && !texture.isEmpty()) {
+                   head.setSkullTexture(texture);
+               }
+            } else {
+               head.setSkullTexture(texture);
+            }
                     
             inv.setItem(slot++, head.build());
             if (slot == 17 || slot == 26 || slot == 35) slot += 2;

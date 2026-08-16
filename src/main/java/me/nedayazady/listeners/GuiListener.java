@@ -192,11 +192,13 @@ public class GuiListener implements Listener {
                 int randomIndex = new java.util.Random().nextInt(actualSkins.size());
                 java.util.Map<?, ?> randomSkin = actualSkins.get(randomIndex);
                 
-                String generatedName = (String) randomSkin.get("name");
-                String generatedTexture = (String) randomSkin.get("texture");
+                String[] prefixes = {"Pro", "Noob", "xX", "The", "Epic", "Dark", "Ghost", "Ninja", "Super", "Mega", "Ultra", "Fast", "Iron", "Gold"};
+                String[] suffixes = {"Gamer", "PVP", "Slayer", "Craft", "Boy", "Girl", "HD", "YT", "MC", "King", "Beast", "Master", "Lord"};
+                String prefix = prefixes[(int) (Math.random() * prefixes.length)];
+                String suffix = suffixes[(int) (Math.random() * suffixes.length)];
+                String generatedName = prefix + suffix + (int)(Math.random() * 99);
                 
-                // Add a random number to make names unique if desired, or keep as is
-                // generatedName = generatedName + new java.util.Random().nextInt(999);
+                String generatedTexture = (String) randomSkin.get("texture");
                 
                 DisguiseData data = plugin.getGuiManager().sessionData.get(player.getUniqueId());
                 if (data != null) {
