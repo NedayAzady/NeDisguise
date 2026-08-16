@@ -2,6 +2,7 @@ package me.nedayazady.listeners;
 
 import me.nedayazady.NeDisguise;
 import me.nedayazady.database.DisguiseData;
+import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
 import org.bukkit.Material;
 import org.bukkit.Sound;
@@ -12,6 +13,8 @@ import org.bukkit.event.inventory.InventoryClickEvent;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
 
+import java.lang.reflect.Field;
+import java.lang.reflect.Method;
 import java.util.List;
 
 public class GuiListener implements Listener {
@@ -118,6 +121,34 @@ public class GuiListener implements Listener {
             }
         }
     }
+    
+    private void changeName(Player player, String newName) {
+        try {
+            Method getHandle = player.getClass().getMethod("getHandle");
+            Object entityPlayer = getHandle.invoke(player);
+            
+            Object gameProfile = entityPlayer.getClass().getMethod("getProfile").invoke(entityPlayer);
+            Field nameField = gameProfile.getClass().getDeclaredField("name");
+            nameField.setAccessible(true);
+            nameField.set(gameProfile, newName);
+            
+            player.setDisplayName(newName);
+            player.setPlayerListName(newName);
+            player.setCustomName(newName);
+            player.setCustomNameVisible(true);
+            
+            // Reload the player for others
+            for (Player p : Bukkit.getOnlinePlayers()) {
+                if (p != player) {
+                    p.hidePlayer(player);
+                    p.showPlayer(player);
+                }
+            }
+            
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
 
     private void handleConfirmation(Player player, ItemStack item) {
         ItemMeta meta = item.getItemMeta();
@@ -145,6 +176,7 @@ public class GuiListener implements Listener {
                         .replace("{name}", data.getName())
                         .replace("{rank}", data.getRank());
                 
+                changeName(player, data.getName());
                 player.sendMessage(plugin.color(msg));
                 player.playSound(player.getLocation(), Sound.valueOf(plugin.getConfig().getString("sounds.success", "ENTITY_PLAYER_LEVELUP")), 1f, 1f);
                 

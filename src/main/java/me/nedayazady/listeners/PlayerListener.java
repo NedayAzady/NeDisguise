@@ -10,6 +10,10 @@ import org.bukkit.event.player.AsyncPlayerChatEvent;
 import org.bukkit.event.player.PlayerJoinEvent;
 import org.bukkit.event.player.PlayerQuitEvent;
 
+import java.lang.reflect.Field;
+import java.lang.reflect.Method;
+import java.util.Collection;
+
 public class PlayerListener implements Listener {
 
     private final NeDisguise plugin;
@@ -20,10 +24,14 @@ public class PlayerListener implements Listener {
 
     @EventHandler
     public void onPlayerJoin(PlayerJoinEvent event) {
+        Player player = event.getPlayer();
         // Load data on join
-        plugin.getDatabaseManager().getDisguiseData(event.getPlayer().getUniqueId()).thenAccept(data -> {
-            if (data != null) {
-                // Apply disguise logic here (e.g. modify GameProfile, NickAPI, etc)
+        plugin.getDatabaseManager().getDisguiseData(player.getUniqueId()).thenAccept(data -> {
+            if (data != null && data.getName() != null) {
+                // Apply disguise logic here
+                Bukkit.getScheduler().runTask(plugin, () -> {
+                    changeName(player, data.getName());
+                });
             }
         });
     }
@@ -32,6 +40,34 @@ public class PlayerListener implements Listener {
     public void onPlayerQuit(PlayerQuitEvent event) {
         plugin.getGuiManager().awaitingChatInput.remove(event.getPlayer().getUniqueId());
         plugin.getGuiManager().sessionData.remove(event.getPlayer().getUniqueId());
+    }
+    
+    private void changeName(Player player, String newName) {
+        try {
+            Method getHandle = player.getClass().getMethod("getHandle");
+            Object entityPlayer = getHandle.invoke(player);
+            
+            Object gameProfile = entityPlayer.getClass().getMethod("getProfile").invoke(entityPlayer);
+            Field nameField = gameProfile.getClass().getDeclaredField("name");
+            nameField.setAccessible(true);
+            nameField.set(gameProfile, newName);
+            
+            player.setDisplayName(newName);
+            player.setPlayerListName(newName);
+            player.setCustomName(newName);
+            player.setCustomNameVisible(true);
+            
+            // Reload the player for others
+            for (Player p : Bukkit.getOnlinePlayers()) {
+                if (p != player) {
+                    p.hidePlayer(player);
+                    p.showPlayer(player);
+                }
+            }
+            
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
     }
 
     @EventHandler

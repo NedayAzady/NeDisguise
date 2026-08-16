@@ -21,11 +21,15 @@ public class CommandListener implements Listener {
     public void onCommandPreProcess(PlayerCommandPreprocessEvent event) {
         Player player = event.getPlayer();
         String message = event.getMessage().toLowerCase();
-        String command = message.split(" ")[0];
+        
+        // Remove the slash for matching
+        String command = message.split(" ")[0].substring(1);
 
         List<String> aliases = plugin.getConfig().getStringList("commands");
         for (String alias : aliases) {
-            if (command.equalsIgnoreCase(alias)) {
+            String checkAlias = alias.startsWith("/") ? alias.substring(1) : alias;
+            
+            if (command.equalsIgnoreCase(checkAlias)) {
                 event.setCancelled(true);
                 
                 String permission = plugin.getConfig().getString("permission", "disguise.perm");
