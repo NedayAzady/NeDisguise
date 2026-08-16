@@ -57,15 +57,18 @@ public class GuiListener implements Listener {
         
         Material nextMat = Material.valueOf(plugin.getConfig().getString("gui.ranks.next_button.material"));
         Material cancelMat = Material.valueOf(plugin.getConfig().getString("gui.ranks.cancel_button.material"));
+        
+        String nextName = ChatColor.stripColor(plugin.color(plugin.getConfig().getString("gui.ranks.next_button.name")));
+        String cancelName = ChatColor.stripColor(plugin.color(plugin.getConfig().getString("gui.ranks.cancel_button.name")));
 
-        if (item.getType() == cancelMat && displayName.equalsIgnoreCase(ChatColor.stripColor(plugin.color(plugin.getConfig().getString("gui.ranks.cancel_button.name"))))) {
+        if (item.getType() == cancelMat && displayName.contains(cancelName)) {
             player.closeInventory();
             player.playSound(player.getLocation(), Sound.valueOf(plugin.getConfig().getString("sounds.cancel", "BLOCK_NOTE_BLOCK_BASS")), 1f, 1f);
             plugin.getGuiManager().sessionData.remove(player.getUniqueId());
             return;
         }
 
-        if (item.getType() == nextMat && displayName.equalsIgnoreCase(ChatColor.stripColor(plugin.color(plugin.getConfig().getString("gui.ranks.next_button.name"))))) {
+        if (item.getType() == nextMat && displayName.contains(nextName)) {
             player.playSound(player.getLocation(), Sound.valueOf(plugin.getConfig().getString("sounds.click", "UI_BUTTON_CLICK")), 1f, 1f);
             plugin.getGuiManager().openSkinSelectionGui(player);
             return;
@@ -101,7 +104,9 @@ public class GuiListener implements Listener {
         String displayName = ChatColor.stripColor(meta.getDisplayName());
 
         Material customMat = Material.valueOf(plugin.getConfig().getString("gui.skins.custom_name_button.material"));
-        if (item.getType() == customMat && displayName.equalsIgnoreCase(ChatColor.stripColor(plugin.color(plugin.getConfig().getString("gui.skins.custom_name_button.name"))))) {
+        String customNameStr = ChatColor.stripColor(plugin.color(plugin.getConfig().getString("gui.skins.custom_name_button.name")));
+        
+        if (item.getType() == customMat && displayName.contains(customNameStr)) {
             player.closeInventory();
             plugin.getGuiManager().awaitingChatInput.put(player.getUniqueId(), true);
             player.sendMessage(plugin.color(plugin.getConfig().getString("messages.type_name_in_chat")));
@@ -157,8 +162,11 @@ public class GuiListener implements Listener {
 
         Material confirmMat = Material.valueOf(plugin.getConfig().getString("gui.confirm.confirm_button.material"));
         Material cancelMat = Material.valueOf(plugin.getConfig().getString("gui.confirm.cancel_button.material"));
+        
+        String confirmNameStr = ChatColor.stripColor(plugin.color(plugin.getConfig().getString("gui.confirm.confirm_button.name")));
+        String cancelNameStr = ChatColor.stripColor(plugin.color(plugin.getConfig().getString("gui.confirm.cancel_button.name")));
 
-        if (item.getType() == cancelMat) {
+        if (item.getType() == cancelMat && displayName.contains(cancelNameStr)) {
             player.closeInventory();
             player.playSound(player.getLocation(), Sound.valueOf(plugin.getConfig().getString("sounds.cancel", "BLOCK_NOTE_BLOCK_BASS")), 1f, 1f);
             plugin.getGuiManager().sessionData.remove(player.getUniqueId());
@@ -166,7 +174,7 @@ public class GuiListener implements Listener {
             return;
         }
 
-        if (item.getType() == confirmMat) {
+        if (item.getType() == confirmMat && displayName.contains(confirmNameStr)) {
             DisguiseData data = plugin.getGuiManager().sessionData.get(player.getUniqueId());
             if (data != null && data.getName() != null && data.getRank() != null) {
                 player.closeInventory();
