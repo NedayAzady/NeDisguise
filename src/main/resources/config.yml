@@ -77,7 +77,7 @@ gui:
       slot: 30
 
 sounds:
-  click: "UI_BUTTON_CLICK"
-  success: "ENTITY_PLAYER_LEVELUP"
-  error: "ENTITY_VILLAGER_NO"
-  cancel: "BLOCK_NOTE_BLOCK_BASS"
+  click: "CLICK"
+  success: "LEVEL_UP"
+  error: "VILLAGER_NO"
+  cancel: "NOTE_BASS"

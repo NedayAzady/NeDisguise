@@ -58,6 +58,16 @@ public class GuiListener implements Listener {
         }
     }
 
+    private void playSoundSafe(Player player, String soundName) {
+        try {
+            Sound sound = Sound.valueOf(soundName);
+            player.playSound(player.getLocation(), sound, 1f, 1f);
+        } catch (IllegalArgumentException e) {
+            // Sound doesn't exist in this version, ignore or log a warning
+            plugin.getLogger().warning("Invalid sound name in config: " + soundName);
+        }
+    }
+
     private void handleRankSelection(Player player, ItemStack item) {
         ItemMeta meta = item.getItemMeta();
         if (meta == null || !meta.hasDisplayName()) return;
@@ -71,13 +81,13 @@ public class GuiListener implements Listener {
 
         if (item.getType() == cancelMat && displayName.contains(cancelName)) {
             player.closeInventory();
-            player.playSound(player.getLocation(), Sound.valueOf(plugin.getConfig().getString("sounds.cancel", "BLOCK_NOTE_BLOCK_BASS")), 1f, 1f);
+            playSoundSafe(player, plugin.getConfig().getString("sounds.cancel", "NOTE_BASS"));
             plugin.getGuiManager().sessionData.remove(player.getUniqueId());
             return;
         }
 
         if (item.getType() == nextMat && displayName.contains(nextName)) {
-            player.playSound(player.getLocation(), Sound.valueOf(plugin.getConfig().getString("sounds.click", "UI_BUTTON_CLICK")), 1f, 1f);
+            playSoundSafe(player, plugin.getConfig().getString("sounds.click", "CLICK"));
             plugin.getGuiManager().openSkinSelectionGui(player);
             return;
         }
@@ -99,7 +109,7 @@ public class GuiListener implements Listener {
                 DisguiseData data = plugin.getGuiManager().sessionData.get(player.getUniqueId());
                 if (data != null) {
                     data.setRank(selectedGroup);
-                    player.playSound(player.getLocation(), Sound.valueOf(plugin.getConfig().getString("sounds.click", "UI_BUTTON_CLICK")), 1f, 1f);
+                    playSoundSafe(player, plugin.getConfig().getString("sounds.click", "CLICK"));
                     player.sendMessage(plugin.color("&aSelected rank: " + selectedGroup));
                 }
             }
@@ -118,7 +128,7 @@ public class GuiListener implements Listener {
             player.closeInventory();
             plugin.getGuiManager().awaitingChatInput.put(player.getUniqueId(), true);
             player.sendMessage(plugin.color(plugin.getConfig().getString("messages.type_name_in_chat")));
-            player.playSound(player.getLocation(), Sound.valueOf(plugin.getConfig().getString("sounds.click", "UI_BUTTON_CLICK")), 1f, 1f);
+            playSoundSafe(player, plugin.getConfig().getString("sounds.click", "CLICK"));
             return;
         }
         
@@ -129,7 +139,7 @@ public class GuiListener implements Listener {
                 data.setName(displayName);
                 // In a real implementation you would extract the texture string from the skull meta
                 data.setSkin("texture_placeholder"); 
-                player.playSound(player.getLocation(), Sound.valueOf(plugin.getConfig().getString("sounds.click", "UI_BUTTON_CLICK")), 1f, 1f);
+                playSoundSafe(player, plugin.getConfig().getString("sounds.click", "CLICK"));
                 plugin.getGuiManager().openConfirmGui(player);
             }
         }
@@ -176,7 +186,7 @@ public class GuiListener implements Listener {
 
         if (item.getType() == cancelMat && displayName.contains(cancelNameStr)) {
             player.closeInventory();
-            player.playSound(player.getLocation(), Sound.valueOf(plugin.getConfig().getString("sounds.cancel", "BLOCK_NOTE_BLOCK_BASS")), 1f, 1f);
+            playSoundSafe(player, plugin.getConfig().getString("sounds.cancel", "NOTE_BASS"));
             plugin.getGuiManager().sessionData.remove(player.getUniqueId());
             player.sendMessage(plugin.color(plugin.getConfig().getString("messages.cancel_disguise")));
             return;
@@ -194,7 +204,7 @@ public class GuiListener implements Listener {
                 
                 changeName(player, data.getName());
                 player.sendMessage(plugin.color(msg));
-                player.playSound(player.getLocation(), Sound.valueOf(plugin.getConfig().getString("sounds.success", "ENTITY_PLAYER_LEVELUP")), 1f, 1f);
+                playSoundSafe(player, plugin.getConfig().getString("sounds.success", "LEVEL_UP"));
                 
                 plugin.getGuiManager().sessionData.remove(player.getUniqueId());
             }
