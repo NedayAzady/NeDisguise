@@ -96,7 +96,8 @@ public class GuiListener implements Listener {
             // Execute configured commands to update TAB/Tags plugins
             List<String> commands = plugin.getConfig().getStringList("on_undisguise_commands");
             for (String cmd : commands) {
-                String formattedCmd = cmd.replace("{player}", player.getName());
+                String originalName = player.getName();
+                String formattedCmd = cmd.replace("{player}", originalName);
                 Bukkit.getServer().dispatchCommand(Bukkit.getConsoleSender(), formattedCmd);
             }
             

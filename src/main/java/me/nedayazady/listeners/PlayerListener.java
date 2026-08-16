@@ -61,9 +61,18 @@ public class PlayerListener implements Listener {
             player.setCustomNameVisible(true);
             
             // Execute configured commands to update TAB/Tags plugins
-            List<String> commands = plugin.getConfig().getStringList("on_disguise_commands");
+            List<String> commands;
+            if (rank == null || rank.isEmpty()) {
+                commands = plugin.getConfig().getStringList("on_undisguise_commands");
+            } else {
+                commands = plugin.getConfig().getStringList("on_disguise_commands");
+            }
+            
             for (String cmd : commands) {
-                String formattedCmd = cmd.replace("{player}", player.getName()).replace("{name}", newName).replace("{rank}", rank);
+                // Ensure we use the real original name of the player for console commands,
+                // as plugins usually index players by their real name/UUID, not their nick.
+                String originalName = player.getName(); 
+                String formattedCmd = cmd.replace("{player}", originalName).replace("{name}", newName);
                 Bukkit.getServer().dispatchCommand(Bukkit.getConsoleSender(), formattedCmd);
             }
             

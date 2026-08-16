@@ -26,11 +26,11 @@ messages:
 # Commands to run to support TAB plugin or other plugins
 on_disguise_commands:
   - "tab player {player} customtabname {name}"
-  - "tab player {player} customtagname {name}"
+  - "tab player {player} tagprefix &7" # You can customize these if needed
   
 on_undisguise_commands:
-  - "tab player {player} customtabname clear"
-  - "tab player {player} customtagname clear"
+  - "tab player {player} customtabname" # Running it with no value clears it in NEZAMY Tab
+  - "tab player {player} tagprefix"
 
 gui:
   filler:
@@ -58,7 +58,7 @@ gui:
       lore:
         - "&7Click to remove your"
         - "&7current disguise."
-      slot: 4
+      slot: 53
     cancel_button:
       material: REDSTONE_BLOCK
       name: "&cCancel"
