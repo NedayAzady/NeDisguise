@@ -59,49 +59,29 @@ public class PlayerListener implements Listener {
             player.setCustomName(newName);
             player.setCustomNameVisible(true);
             
-            // Reload the player for others
+            // Reload the player for others to update tab and nametags properly
             for (Player p : Bukkit.getOnlinePlayers()) {
                 if (p != player) {
                     p.hidePlayer(player);
-                    p.showPlayer(player);
+                    // Add a slight delay before showing to ensure client clears cache
+                    Bukkit.getScheduler().runTaskLater(plugin, () -> {
+                        p.showPlayer(player);
+                    }, 2L);
                 }
             }
+            
+            // Force self update if possible
+            player.hidePlayer(player);
+            Bukkit.getScheduler().runTaskLater(plugin, () -> {
+                player.showPlayer(player);
+            }, 2L);
             
         } catch (Exception e) {
             e.printStackTrace();
         }
     }
 
-    @EventHandler
-    public void onChat(AsyncPlayerChatEvent event) {
-        Player player = event.getPlayer();
-        if (plugin.getGuiManager().awaitingChatInput.containsKey(player.getUniqueId())) {
-            event.setCancelled(true);
-            String message = event.getMessage().trim();
-
-            if (message.equalsIgnoreCase("cancel")) {
-                plugin.getGuiManager().awaitingChatInput.remove(player.getUniqueId());
-                player.sendMessage(plugin.color(plugin.getConfig().getString("messages.cancel_disguise")));
-                return;
-            }
-
-            if (message.length() > 16) {
-                player.sendMessage(plugin.color(plugin.getConfig().getString("messages.name_too_long")));
-                return;
-            }
-            
-            if (!message.matches("^[a-zA-Z0-9_]+$")) {
-                player.sendMessage(plugin.color(plugin.getConfig().getString("messages.invalid_name")));
-                return;
-            }
-
-            plugin.getGuiManager().awaitingChatInput.remove(player.getUniqueId());
-            DisguiseData data = plugin.getGuiManager().sessionData.get(player.getUniqueId());
-            if (data != null) {
-                data.setName(message);
-                // Return to main thread to open GUI
-                Bukkit.getScheduler().runTask(plugin, () -> plugin.getGuiManager().openConfirmGui(player));
-            }
-        }
-    }
+    // The chat listener for name input is no longer needed as we use SignGUI now
+    // @EventHandler
+    // public void onChat(AsyncPlayerChatEvent event) { ... }
 }

@@ -12,8 +12,8 @@
 
   <properties>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-    <maven.compiler.source>1.8</maven.compiler.source>
-    <maven.compiler.target>1.8</maven.compiler.target>
+    <maven.compiler.source>16</maven.compiler.source>
+    <maven.compiler.target>16</maven.compiler.target>
   </properties>
 
   <repositories>
@@ -28,6 +28,10 @@
     <repository>
       <id>papermc</id>
       <url>https://repo.papermc.io/repository/maven-public/</url>
+    </repository>
+    <repository>
+      <id>jitpack.io</id>
+      <url>https://jitpack.io</url>
     </repository>
   </repositories>
 
@@ -59,6 +63,13 @@
         <version>1.5.21</version>
         <scope>provided</scope>
     </dependency>
+
+    <!-- SignGUI Dependency for better text input -->
+    <dependency>
+        <groupId>de.rapha149.signgui</groupId>
+        <artifactId>signgui</artifactId>
+        <version>2.3.1</version>
+    </dependency>
   </dependencies>
 
   <build>
@@ -68,15 +79,15 @@
         <artifactId>maven-compiler-plugin</artifactId>
         <version>3.8.1</version>
         <configuration>
-          <source>1.8</source>
-          <target>1.8</target>
+          <source>16</source>
+          <target>16</target>
         </configuration>
       </plugin>
       
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-shade-plugin</artifactId>
-        <version>3.2.4</version>
+        <version>3.5.0</version>
         <executions>
           <execution>
             <phase>package</phase>
@@ -88,6 +99,10 @@
                 <relocation>
                   <pattern>com.zaxxer.hikari</pattern>
                   <shadedPattern>me.nedayazady.lib.hikari</shadedPattern>
+                </relocation>
+                <relocation>
+                  <pattern>de.rapha149.signgui</pattern>
+                  <shadedPattern>me.nedayazady.lib.signgui</shadedPattern>
                 </relocation>
               </relocations>
             </configuration>

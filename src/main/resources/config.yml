@@ -24,6 +24,10 @@ messages:
   invalid_name: "&cInvalid name format. Use alphanumeric characters and underscores."
 
 gui:
+  filler:
+    material: STAINED_GLASS_PANE
+    data: 15
+    name: " "
   ranks:
     title: "&8Select Disguise Rank"
     size: 54
@@ -70,11 +74,11 @@ gui:
     confirm_button:
       material: EMERALD_BLOCK
       name: "&aDisguise"
-      slot: 31
+      slot: 33
     cancel_button:
       material: REDSTONE_BLOCK
       name: "&cCancel"
-      slot: 30
+      slot: 29
 
 sounds:
   click: "CLICK"

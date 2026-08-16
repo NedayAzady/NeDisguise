@@ -9,6 +9,7 @@ import org.bukkit.Material;
 import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.Inventory;
+import org.bukkit.inventory.ItemStack;
 
 import java.util.HashMap;
 import java.util.List;
@@ -24,6 +25,20 @@ public class GuiManager {
 
     public GuiManager(NeDisguise plugin) {
         this.plugin = plugin;
+    }
+
+    private void fillGui(Inventory inv, ConfigurationSection config) {
+        Material fillerMat = Material.valueOf(plugin.getConfig().getString("gui.filler.material", "STAINED_GLASS_PANE"));
+        short fillerData = (short) plugin.getConfig().getInt("gui.filler.data", 15);
+        String fillerName = plugin.color(plugin.getConfig().getString("gui.filler.name", " "));
+        
+        ItemStack filler = new ItemBuilder(fillerMat, 1, fillerData).name(fillerName).build();
+        
+        for (int i = 0; i < inv.getSize(); i++) {
+            if (inv.getItem(i) == null || inv.getItem(i).getType() == Material.AIR) {
+                inv.setItem(i, filler);
+            }
+        }
     }
 
     public void openRankSelectionGui(Player player) {
@@ -62,6 +77,7 @@ public class GuiManager {
         inv.setItem(cancelBtn.getInt("slot"), new ItemBuilder(Material.valueOf(cancelBtn.getString("material")))
                 .name(plugin.color(cancelBtn.getString("name"))).build());
 
+        fillGui(inv, config);
         player.openInventory(inv);
         
         // Initialize session
@@ -97,6 +113,7 @@ public class GuiManager {
                 .lore(customBtn.getStringList("lore").stream().map(plugin::color).collect(Collectors.toList()))
                 .build());
 
+        fillGui(inv, config);
         player.openInventory(inv);
     }
 
@@ -118,15 +135,22 @@ public class GuiManager {
         // Show current selections in the middle
         DisguiseData data = sessionData.get(player.getUniqueId());
         if (data != null) {
-            inv.setItem(13, new ItemBuilder(Material.PAPER)
-                .name(plugin.color("&eDisguise Summary"))
+            String skullTexture = data.getSkin() != null && !data.getSkin().equals("texture_placeholder") ? data.getSkin() : null;
+            ItemBuilder infoHead = new ItemBuilder(Material.SKULL_ITEM, 1, (short) 3)
+                .name(plugin.color("&eYour Disguise"))
                 .lore(java.util.Arrays.asList(
                     plugin.color("&7Name: &f" + (data.getName() != null ? data.getName() : "&cNone")),
                     plugin.color("&7Rank: &f" + (data.getRank() != null ? data.getRank() : "&cNone"))
-                ))
-                .build());
+                ));
+            
+            if (skullTexture != null) {
+                infoHead.setSkullTexture(skullTexture);
+            }
+                
+            inv.setItem(31, infoHead.build());
         }
 
+        fillGui(inv, config);
         player.openInventory(inv);
     }
 }

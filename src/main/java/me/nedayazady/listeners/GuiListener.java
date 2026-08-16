@@ -1,5 +1,7 @@
 package me.nedayazady.listeners;
 
+import de.rapha149.signgui.SignGUI;
+import de.rapha149.signgui.SignGUIAction;
 import me.nedayazady.NeDisguise;
 import me.nedayazady.database.DisguiseData;
 import org.bukkit.Bukkit;
@@ -15,6 +17,7 @@ import org.bukkit.inventory.meta.ItemMeta;
 
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
+import java.util.Arrays;
 import java.util.List;
 
 public class GuiListener implements Listener {
@@ -126,9 +129,38 @@ public class GuiListener implements Listener {
         
         if (item.getType() == customMat && displayName.contains(customNameStr)) {
             player.closeInventory();
-            plugin.getGuiManager().awaitingChatInput.put(player.getUniqueId(), true);
-            player.sendMessage(plugin.color(plugin.getConfig().getString("messages.type_name_in_chat")));
             playSoundSafe(player, plugin.getConfig().getString("sounds.click", "CLICK"));
+            
+            // Open Sign GUI for custom name input
+            SignGUI.builder()
+                    .setLines(new String[]{"", "^^^^^^^^^^^^^^^", "Enter a name", "for your disguise"})
+                    .setType(Material.SIGN)
+                    .setHandler((p, result) -> {
+                        String nameInput = result.getLineWithoutColor(0).trim();
+                        
+                        if (nameInput.isEmpty()) {
+                            return Arrays.asList(SignGUIAction.run(() -> p.sendMessage(plugin.color("&cName cannot be empty."))));
+                        }
+                        
+                        if (nameInput.length() > 16) {
+                            return Arrays.asList(SignGUIAction.run(() -> p.sendMessage(plugin.color(plugin.getConfig().getString("messages.name_too_long")))));
+                        }
+                        
+                        if (!nameInput.matches("^[a-zA-Z0-9_]+$")) {
+                            return Arrays.asList(SignGUIAction.run(() -> p.sendMessage(plugin.color(plugin.getConfig().getString("messages.invalid_name")))));
+                        }
+                        
+                        DisguiseData data = plugin.getGuiManager().sessionData.get(p.getUniqueId());
+                        if (data != null) {
+                            data.setName(nameInput);
+                            return Arrays.asList(SignGUIAction.run(() -> {
+                                Bukkit.getScheduler().runTask(plugin, () -> plugin.getGuiManager().openConfirmGui(p));
+                            }));
+                        }
+                        return Arrays.asList();
+                    })
+                    .build()
+                    .open(player);
             return;
         }
         
@@ -160,13 +192,22 @@ public class GuiListener implements Listener {
             player.setCustomName(newName);
             player.setCustomNameVisible(true);
             
-            // Reload the player for others
+            // Reload the player for others to update tab and nametags properly
             for (Player p : Bukkit.getOnlinePlayers()) {
                 if (p != player) {
                     p.hidePlayer(player);
-                    p.showPlayer(player);
+                    // Add a slight delay before showing to ensure client clears cache
+                    Bukkit.getScheduler().runTaskLater(plugin, () -> {
+                        p.showPlayer(player);
+                    }, 2L);
                 }
             }
+            
+            // Force self update
+            player.hidePlayer(player);
+            Bukkit.getScheduler().runTaskLater(plugin, () -> {
+                player.showPlayer(player);
+            }, 2L);
             
         } catch (Exception e) {
             e.printStackTrace();
