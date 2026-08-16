@@ -9,8 +9,7 @@ import org.bukkit.event.Listener;
 import org.bukkit.event.player.AsyncPlayerChatEvent;
 import org.bukkit.event.player.PlayerJoinEvent;
 import org.bukkit.event.player.PlayerQuitEvent;
-import org.bukkit.event.server.ServerCommandEvent;
-import org.bukkit.event.player.PlayerCommandPreprocessEvent;
+import java.util.List;
 
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
@@ -58,6 +57,13 @@ public class PlayerListener implements Listener {
             player.setPlayerListName(newName);
             player.setCustomName(newName);
             player.setCustomNameVisible(true);
+            
+            // Execute configured commands to update TAB/Tags plugins
+            List<String> commands = plugin.getConfig().getStringList("on_disguise_commands");
+            for (String cmd : commands) {
+                String formattedCmd = cmd.replace("{player}", player.getName()).replace("{name}", newName);
+                Bukkit.getServer().dispatchCommand(Bukkit.getConsoleSender(), formattedCmd);
+            }
             
             // Reload the player for others to update tab and nametags properly
             for (Player p : Bukkit.getOnlinePlayers()) {

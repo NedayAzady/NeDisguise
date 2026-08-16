@@ -22,6 +22,10 @@ public class GuiManager {
     private final NeDisguise plugin;
     public final Map<UUID, DisguiseData> sessionData = new HashMap<>();
     public final Map<UUID, Boolean> awaitingChatInput = new HashMap<>();
+    
+    // Pagination tracking
+    public final Map<UUID, Integer> rankPage = new HashMap<>();
+    public final Map<UUID, Integer> skinPage = new HashMap<>();
 
     public GuiManager(NeDisguise plugin) {
         this.plugin = plugin;
@@ -42,6 +46,7 @@ public class GuiManager {
     }
 
     public void openRankSelectionGui(Player player) {
+        int page = rankPage.getOrDefault(player.getUniqueId(), 1);
         ConfigurationSection config = plugin.getConfig().getConfigurationSection("gui.ranks");
         String title = plugin.color(config.getString("title"));
         int size = config.getInt("size");
@@ -49,8 +54,22 @@ public class GuiManager {
         Inventory inv = Bukkit.createInventory(null, size, title);
 
         List<String> groups = config.getStringList("groups");
+        
+        int itemsPerPage = 21;
+        int maxPages = (int) Math.ceil((double) groups.size() / itemsPerPage);
+        if (maxPages == 0) maxPages = 1;
+        
+        // Ensure page bounds
+        if (page > maxPages) page = maxPages;
+        if (page < 1) page = 1;
+        rankPage.put(player.getUniqueId(), page);
+
+        int startIndex = (page - 1) * itemsPerPage;
+        int endIndex = Math.min(startIndex + itemsPerPage, groups.size());
+
         int slot = 10;
-        for (String groupName : groups) {
+        for (int i = startIndex; i < endIndex; i++) {
+            String groupName = groups.get(i);
             Group group = plugin.getLuckPerms().getGroupManager().getGroup(groupName);
             String prefix = group != null ? group.getCachedData().getMetaData().getPrefix() : "";
             if (prefix == null) prefix = "";
@@ -69,9 +88,23 @@ public class GuiManager {
             if (slot == 17 || slot == 26 || slot == 35) slot += 2;
         }
 
-        ConfigurationSection nextBtn = config.getConfigurationSection("next_button");
-        inv.setItem(nextBtn.getInt("slot"), new ItemBuilder(Material.valueOf(nextBtn.getString("material")))
-                .name(plugin.color(nextBtn.getString("name"))).build());
+        if (page < maxPages) {
+            ConfigurationSection nextBtn = config.getConfigurationSection("next_button");
+            inv.setItem(nextBtn.getInt("slot"), new ItemBuilder(Material.valueOf(nextBtn.getString("material")))
+                    .name(plugin.color(nextBtn.getString("name"))).build());
+        }
+        
+        if (page > 1) {
+            ConfigurationSection prevBtn = config.getConfigurationSection("previous_button");
+            inv.setItem(prevBtn.getInt("slot"), new ItemBuilder(Material.valueOf(prevBtn.getString("material")))
+                    .name(plugin.color(prevBtn.getString("name"))).build());
+        }
+        
+        ConfigurationSection pageBtn = config.getConfigurationSection("page_indicator");
+        if (pageBtn != null) {
+            String pageName = plugin.color(pageBtn.getString("name").replace("{page}", String.valueOf(page)).replace("{max}", String.valueOf(maxPages)));
+            inv.setItem(pageBtn.getInt("slot"), new ItemBuilder(Material.valueOf(pageBtn.getString("material"))).name(pageName).build());
+        }
 
         ConfigurationSection cancelBtn = config.getConfigurationSection("cancel_button");
         inv.setItem(cancelBtn.getInt("slot"), new ItemBuilder(Material.valueOf(cancelBtn.getString("material")))
@@ -80,11 +113,12 @@ public class GuiManager {
         fillGui(inv, config);
         player.openInventory(inv);
         
-        // Initialize session
-        sessionData.put(player.getUniqueId(), new DisguiseData(null, null, null));
+        // Initialize session if empty
+        sessionData.putIfAbsent(player.getUniqueId(), new DisguiseData(null, null, null));
     }
 
     public void openSkinSelectionGui(Player player) {
+        int page = skinPage.getOrDefault(player.getUniqueId(), 1);
         ConfigurationSection config = plugin.getConfig().getConfigurationSection("gui.skins");
         String title = plugin.color(config.getString("title"));
         int size = config.getInt("size");
@@ -92,9 +126,22 @@ public class GuiManager {
         Inventory inv = Bukkit.createInventory(null, size, title);
 
         List<Map<?, ?>> skins = config.getMapList("available_skins");
+        
+        int itemsPerPage = 21;
+        int maxPages = (int) Math.ceil((double) skins.size() / itemsPerPage);
+        if (maxPages == 0) maxPages = 1;
+        
+        if (page > maxPages) page = maxPages;
+        if (page < 1) page = 1;
+        skinPage.put(player.getUniqueId(), page);
+        
+        int startIndex = (page - 1) * itemsPerPage;
+        int endIndex = Math.min(startIndex + itemsPerPage, skins.size());
+
         int slot = 10;
         
-        for (Map<?, ?> skinInfo : skins) {
+        for (int i = startIndex; i < endIndex; i++) {
+            Map<?, ?> skinInfo = skins.get(i);
             String name = (String) skinInfo.get("name");
             String texture = (String) skinInfo.get("texture");
             
@@ -105,6 +152,34 @@ public class GuiManager {
                     
             inv.setItem(slot++, head.build());
             if (slot == 17 || slot == 26 || slot == 35) slot += 2;
+        }
+
+        if (page < maxPages) {
+            ConfigurationSection nextBtn = config.getConfigurationSection("next_button");
+            if (nextBtn != null) {
+                inv.setItem(nextBtn.getInt("slot"), new ItemBuilder(Material.valueOf(nextBtn.getString("material")))
+                        .name(plugin.color(nextBtn.getString("name"))).build());
+            }
+        }
+        
+        if (page > 1) {
+            ConfigurationSection prevBtn = config.getConfigurationSection("previous_button");
+            if (prevBtn != null) {
+                inv.setItem(prevBtn.getInt("slot"), new ItemBuilder(Material.valueOf(prevBtn.getString("material")))
+                        .name(plugin.color(prevBtn.getString("name"))).build());
+            }
+        }
+        
+        ConfigurationSection pageBtn = config.getConfigurationSection("page_indicator");
+        if (pageBtn != null) {
+            String pageName = plugin.color(pageBtn.getString("name").replace("{page}", String.valueOf(page)).replace("{max}", String.valueOf(maxPages)));
+            inv.setItem(pageBtn.getInt("slot"), new ItemBuilder(Material.valueOf(pageBtn.getString("material"))).name(pageName).build());
+        }
+        
+        ConfigurationSection backBtn = config.getConfigurationSection("back_button");
+        if (backBtn != null) {
+            inv.setItem(backBtn.getInt("slot"), new ItemBuilder(Material.valueOf(backBtn.getString("material")))
+                    .name(plugin.color(backBtn.getString("name"))).build());
         }
 
         ConfigurationSection customBtn = config.getConfigurationSection("custom_name_button");

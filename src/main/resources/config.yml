@@ -19,9 +19,18 @@ messages:
   disguised: "&aYou are now disguised as {name} with the {rank} rank!"
   undisguised: "&eYour disguise has been removed."
   cancel_disguise: "&cDisguise cancelled."
-  type_name_in_chat: "&ePlease type your desired disguise name in the chat (or type 'cancel' to cancel):"
+  type_name_in_chat: "&ePlease enter your desired disguise name in the sign."
   name_too_long: "&cName must be 16 characters or less."
   invalid_name: "&cInvalid name format. Use alphanumeric characters and underscores."
+
+# Commands to run to support TAB plugin or other plugins
+on_disguise_commands:
+  - "tab player {player} customtabname {name}"
+  - "tab player {player} customtagname {name}"
+  
+on_undisguise_commands:
+  - "tab player {player} customtabname clear"
+  - "tab player {player} customtagname clear"
 
 gui:
   filler:
@@ -32,21 +41,45 @@ gui:
     title: "&8Select Disguise Rank"
     size: 54
     next_button:
-      material: EMERALD_BLOCK
+      material: ARROW
       name: "&aNext Page"
-      slot: 53
+      slot: 50
+    previous_button:
+      material: ARROW
+      name: "&cPrevious Page"
+      slot: 48
+    page_indicator:
+      material: BOOK
+      name: "&ePage {page}/{max}"
+      slot: 49
     cancel_button:
       material: REDSTONE_BLOCK
       name: "&cCancel"
       slot: 45
     # Default ranks mapping to LuckPerms
-    # The plugin will fetch prefix/suffix from LuckPerms for these groups
     groups:
       - "default"
       - "vip"
+      - "vip_plus"
       - "pro"
+      - "pro_plus"
       - "mvp"
+      - "mvp_plus"
       - "ace"
+      - "ace_plus"
+      - "hero"
+      - "legend"
+      - "titan"
+      - "mythic"
+      - "god"
+      - "immortal"
+      - "champion"
+      - "master"
+      - "overlord"
+      - "supreme"
+      - "celestial"
+      - "galactic"
+      - "universal"
     rank_item:
       material: PAPER
       name: "{prefix} {group_name}"
@@ -56,17 +89,55 @@ gui:
   skins:
     title: "&8Select Disguise Skin"
     size: 54
+    next_button:
+      material: ARROW
+      name: "&aNext Page"
+      slot: 50
+    previous_button:
+      material: ARROW
+      name: "&cPrevious Page"
+      slot: 48
+    page_indicator:
+      material: BOOK
+      name: "&ePage {page}/{max}"
+      slot: 49
+    back_button:
+      material: BARRIER
+      name: "&cBack to Ranks"
+      slot: 45
     custom_name_button:
       material: NAME_TAG
       name: "&eCustom Name"
       lore:
         - "&7Click to enter a custom name"
-      slot: 49
+      slot: 53
     available_skins:
       - name: "Notch"
         texture: "ewogICJ0aW1lc3RhbXAiIDogMTYzNzIwNDY3NTU1OCwKICAicHJvZmlsZUlkIiA6ICIwNjlhNzlmNDQ0ZTk0NzI2YTViZWZjY2JmMjc2MmZkMyIsCiAgInByb2ZpbGVOYW1lIiA6ICJOb3RjaCIsCiAgInNpZ25hdHVyZVJlcXVpcmVkIiA6IHRydWUsCiAgInRleHR1cmVzIiA6IHsKICAgICJTS0lOIiA6IHsKICAgICAgInVybCIgOiAiaHR0cDovL3RleHR1cmVzLm1pbmVjcmFmdC5uZXQvdGV4dHVyZS8yOTIwMDlhNDkyNWI1OGYwMmM3N2RhZGMzZWNlZjA3ZWE0Yzc0NzJmNjRlMGZkYzMyY2U1NTIyNDg5MzYyNjgwIgogICAgfQogIH0KfQ=="
       - name: "Dinnerbone"
         texture: "ewogICJ0aW1lc3RhbXAiIDogMTYzNzIwNDcwNDAyNSwKICAicHJvZmlsZUlkIiA6ICI2MTZlMjk3ZTc5NDI0MjdiODZhYmI4YjczMzc4NTFkMCIsCiAgInByb2ZpbGVOYW1lIiA6ICJEaW5uZXJib25lIiwKICAic2lnbmF0dXJlUmVxdWlyZWQiIDogdHJ1ZSwKICAidGV4dHVyZXMiIDogewogICAgIlNLSU4iIDogewogICAgICAidXJsIiA6ICJodHRwOi8vdGV4dHVyZXMubWluZWNyYWZ0Lm5ldC90ZXh0dXJlLzFmNGVlODZkNjY5OTkxNWRmOGFmMjk2NmQ2YmNjMDNlMjk2MjIzZjM1ZGMzNzZiNTQ3NmVhOTkyNzRiM2EzYmMiCiAgICB9CiAgfQp9"
+      - name: "Dream"
+        texture: "eyJ0ZXh0dXJlcyI6eyJTS0lOIjp7InVybCI6Imh0dHA6Ly90ZXh0dXJlcy5taW5lY3JhZnQubmV0L3RleHR1cmUvMTRjNGVlMjY0ODhlMWRlYTU2Yjg0ZjVjZDQ4ZDAxYzEwNmFhZWEwNjY0NmIyNjZhNDIyOGI3ODc5MzQ1MGUifX19"
+      - name: "Technoblade"
+        texture: "eyJ0ZXh0dXJlcyI6eyJTS0lOIjp7InVybCI6Imh0dHA6Ly90ZXh0dXJlcy5taW5lY3JhZnQubmV0L3RleHR1cmUvYmM1NGE5NDdiZDhmNzRmZTFlYWJkZGI3MzBhMzZmMjk4OWFhODUzZGE2ZTlhMmM3NjY1NWFmNmI2NGQ4In19fQ=="
+      - name: "TommyInnit"
+        texture: "eyJ0ZXh0dXJlcyI6eyJTS0lOIjp7InVybCI6Imh0dHA6Ly90ZXh0dXJlcy5taW5lY3JhZnQubmV0L3RleHR1cmUvZDEyNDRiNWY0NGVjNGI4ODkyZTg2ZjlkYWJmNTZmMTBiNWQwNjFiNmIyYTg2NzM2ZWRhMzhlNmJhOWRjNjFlNSJ9fX0="
+      - name: "Grian"
+        texture: "eyJ0ZXh0dXJlcyI6eyJTS0lOIjp7InVybCI6Imh0dHA6Ly90ZXh0dXJlcy5taW5lY3JhZnQubmV0L3RleHR1cmUvOGNlNGE5NjU3ZWMyZDU5MzZkYzc4ZmU1NDg3NDRlODRkZjBlMWJjODkyNzRmZWQxN2NiZTRjMzRlMDdiZDJkZCJ9fX0="
+      - name: "MumboJumbo"
+        texture: "eyJ0ZXh0dXJlcyI6eyJTS0lOIjp7InVybCI6Imh0dHA6Ly90ZXh0dXJlcy5taW5lY3JhZnQubmV0L3RleHR1cmUvZTNkYWEzY2ZlNDhhOTY3NmVmNTU0MzJkMjExNzJkODExZDhhMTRmZDkzMzc3MzVkMmZlYTIyNWMzYzQyMTQyIn19fQ=="
+      - name: "DanTDM"
+        texture: "eyJ0ZXh0dXJlcyI6eyJTS0lOIjp7InVybCI6Imh0dHA6Ly90ZXh0dXJlcy5taW5lY3JhZnQubmV0L3RleHR1cmUvZmRhZjRmZTBiZDFmNTZhNmY2ZWQ3ZmQyZDNlYjljZmMyZTgzMmY1OTlhNmJkNGY4YjNlODIyZDM5MjdhYWIwIn19fQ=="
+      - name: "CaptainSparklez"
+        texture: "eyJ0ZXh0dXJlcyI6eyJTS0lOIjp7InVybCI6Imh0dHA6Ly90ZXh0dXJlcy5taW5lY3JhZnQubmV0L3RleHR1cmUvNTRmNDhlNmI3NzRhYmFhZmJhNzM2MTRhNzJhODc4NDZmZmEyMDlkYWE3NWM4MDlkYzg4NzRjMjllYWNlMWMyIn19fQ=="
+      - name: "PewDiePie"
+        texture: "eyJ0ZXh0dXJlcyI6eyJTS0lOIjp7InVybCI6Imh0dHA6Ly90ZXh0dXJlcy5taW5lY3JhZnQubmV0L3RleHR1cmUvYTFkMjU4NmExNTM2NTBkOTk2ZjczZWQ0ZTg5ZmVmZWVmMjA4MDk1MGVjYzRkNTUzZjM0OWZhNGJhMDZlYjZkNiJ9fX0="
+      - name: "Ninja"
+        texture: "eyJ0ZXh0dXJlcyI6eyJTS0lOIjp7InVybCI6Imh0dHA6Ly90ZXh0dXJlcy5taW5lY3JhZnQubmV0L3RleHR1cmUvMzNkOTBkYWZmNmU0ZmU0ZmM1NTZlMjRhYzFlNjA4ZTc5OTg1ZmEyYWZkMmZkNzlkNGRhMzZhYTQ1Y2MyNmI4ZSJ9fX0="
+      - name: "Steve"
+        texture: "eyJ0ZXh0dXJlcyI6eyJTS0lOIjp7InVybCI6Imh0dHA6Ly90ZXh0dXJlcy5taW5lY3JhZnQubmV0L3RleHR1cmUvNWEzMmY1ZDVjYTIyZTQ5ZWNmNDBhYTgyMmI2YzU4Y2ZmMTZlM2NlMTFiMzIzOTk1NzgxMzlkZGY1NmZlZGI1In19fQ=="
+      - name: "Alex"
+        texture: "eyJ0ZXh0dXJlcyI6eyJTS0lOIjp7InVybCI6Imh0dHA6Ly90ZXh0dXJlcy5taW5lY3JhZnQubmV0L3RleHR1cmUvZDYxMmZlNzBhNDM2NmJlNWI2MjU5YmMzMmQzNTliNDRhZWZjMDczNGQ2OWUyMjcwOGQ1MmZhNTgyOTY0MmNmYSJ9fX0="
 
   confirm:
     title: "&8Confirm Disguise"

@@ -76,10 +76,12 @@ public class GuiListener implements Listener {
         if (meta == null || !meta.hasDisplayName()) return;
         String displayName = ChatColor.stripColor(meta.getDisplayName());
         
-        Material nextMat = Material.valueOf(plugin.getConfig().getString("gui.ranks.next_button.material"));
+        Material nextMat = Material.valueOf(plugin.getConfig().getString("gui.ranks.next_button.material", "ARROW"));
+        Material prevMat = Material.valueOf(plugin.getConfig().getString("gui.ranks.previous_button.material", "ARROW"));
         Material cancelMat = Material.valueOf(plugin.getConfig().getString("gui.ranks.cancel_button.material"));
         
-        String nextName = ChatColor.stripColor(plugin.color(plugin.getConfig().getString("gui.ranks.next_button.name")));
+        String nextName = ChatColor.stripColor(plugin.color(plugin.getConfig().getString("gui.ranks.next_button.name", "Next")));
+        String prevName = ChatColor.stripColor(plugin.color(plugin.getConfig().getString("gui.ranks.previous_button.name", "Previous")));
         String cancelName = ChatColor.stripColor(plugin.color(plugin.getConfig().getString("gui.ranks.cancel_button.name")));
 
         if (item.getType() == cancelMat && displayName.contains(cancelName)) {
@@ -91,7 +93,17 @@ public class GuiListener implements Listener {
 
         if (item.getType() == nextMat && displayName.contains(nextName)) {
             playSoundSafe(player, plugin.getConfig().getString("sounds.click", "CLICK"));
-            plugin.getGuiManager().openSkinSelectionGui(player);
+            int page = plugin.getGuiManager().rankPage.getOrDefault(player.getUniqueId(), 1);
+            plugin.getGuiManager().rankPage.put(player.getUniqueId(), page + 1);
+            plugin.getGuiManager().openRankSelectionGui(player);
+            return;
+        }
+        
+        if (item.getType() == prevMat && displayName.contains(prevName)) {
+            playSoundSafe(player, plugin.getConfig().getString("sounds.click", "CLICK"));
+            int page = plugin.getGuiManager().rankPage.getOrDefault(player.getUniqueId(), 1);
+            plugin.getGuiManager().rankPage.put(player.getUniqueId(), page - 1);
+            plugin.getGuiManager().openRankSelectionGui(player);
             return;
         }
 
@@ -113,7 +125,7 @@ public class GuiListener implements Listener {
                 if (data != null) {
                     data.setRank(selectedGroup);
                     playSoundSafe(player, plugin.getConfig().getString("sounds.click", "CLICK"));
-                    player.sendMessage(plugin.color("&aSelected rank: " + selectedGroup));
+                    plugin.getGuiManager().openSkinSelectionGui(player);
                 }
             }
         }
@@ -127,6 +139,36 @@ public class GuiListener implements Listener {
         Material customMat = Material.valueOf(plugin.getConfig().getString("gui.skins.custom_name_button.material"));
         String customNameStr = ChatColor.stripColor(plugin.color(plugin.getConfig().getString("gui.skins.custom_name_button.name")));
         
+        Material nextMat = Material.valueOf(plugin.getConfig().getString("gui.skins.next_button.material", "ARROW"));
+        Material prevMat = Material.valueOf(plugin.getConfig().getString("gui.skins.previous_button.material", "ARROW"));
+        Material backMat = Material.valueOf(plugin.getConfig().getString("gui.skins.back_button.material", "BARRIER"));
+        
+        String nextName = ChatColor.stripColor(plugin.color(plugin.getConfig().getString("gui.skins.next_button.name", "Next")));
+        String prevName = ChatColor.stripColor(plugin.color(plugin.getConfig().getString("gui.skins.previous_button.name", "Previous")));
+        String backName = ChatColor.stripColor(plugin.color(plugin.getConfig().getString("gui.skins.back_button.name", "Back")));
+
+        if (item.getType() == nextMat && displayName.contains(nextName)) {
+            playSoundSafe(player, plugin.getConfig().getString("sounds.click", "CLICK"));
+            int page = plugin.getGuiManager().skinPage.getOrDefault(player.getUniqueId(), 1);
+            plugin.getGuiManager().skinPage.put(player.getUniqueId(), page + 1);
+            plugin.getGuiManager().openSkinSelectionGui(player);
+            return;
+        }
+        
+        if (item.getType() == prevMat && displayName.contains(prevName)) {
+            playSoundSafe(player, plugin.getConfig().getString("sounds.click", "CLICK"));
+            int page = plugin.getGuiManager().skinPage.getOrDefault(player.getUniqueId(), 1);
+            plugin.getGuiManager().skinPage.put(player.getUniqueId(), page - 1);
+            plugin.getGuiManager().openSkinSelectionGui(player);
+            return;
+        }
+        
+        if (item.getType() == backMat && displayName.contains(backName)) {
+            playSoundSafe(player, plugin.getConfig().getString("sounds.click", "CLICK"));
+            plugin.getGuiManager().openRankSelectionGui(player);
+            return;
+        }
+
         if (item.getType() == customMat && displayName.contains(customNameStr)) {
             player.closeInventory();
             playSoundSafe(player, plugin.getConfig().getString("sounds.click", "CLICK"));
@@ -134,7 +176,7 @@ public class GuiListener implements Listener {
             // Open Sign GUI for custom name input
             SignGUI.builder()
                     .setLines(new String[]{"", "^^^^^^^^^^^^^^^", "Enter a name", "for your disguise"})
-                    .setType(Material.SIGN)
+                    .setType(Material.SIGN_POST)
                     .setHandler((p, result) -> {
                         String nameInput = result.getLineWithoutColor(0).trim();
                         
@@ -191,6 +233,13 @@ public class GuiListener implements Listener {
             player.setPlayerListName(newName);
             player.setCustomName(newName);
             player.setCustomNameVisible(true);
+            
+            // Execute configured commands to update TAB/Tags plugins
+            List<String> commands = plugin.getConfig().getStringList("on_disguise_commands");
+            for (String cmd : commands) {
+                String formattedCmd = cmd.replace("{player}", player.getName()).replace("{name}", newName);
+                Bukkit.getServer().dispatchCommand(Bukkit.getConsoleSender(), formattedCmd);
+            }
             
             // Reload the player for others to update tab and nametags properly
             for (Player p : Bukkit.getOnlinePlayers()) {
