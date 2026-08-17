@@ -37,11 +37,12 @@ public class GuiListener implements Listener {
         String title = ChatColor.stripColor(event.getView().getTitle());
         if (title == null) return;
 
+        String mainTitle = ChatColor.stripColor(plugin.color(plugin.getConfig().getString("gui.main.title", "&8Disguise Menu")));
         String rankTitle = ChatColor.stripColor(plugin.color(plugin.getConfig().getString("gui.ranks.title")));
         String skinTitle = ChatColor.stripColor(plugin.color(plugin.getConfig().getString("gui.skins.title")));
         String confirmTitle = ChatColor.stripColor(plugin.color(plugin.getConfig().getString("gui.confirm.title")));
 
-        boolean isDisguiseGui = title.equals(rankTitle) || title.equals(skinTitle) || title.equals(confirmTitle);
+        boolean isDisguiseGui = title.equals(mainTitle) || title.equals(rankTitle) || title.equals(skinTitle) || title.equals(confirmTitle);
         if (!isDisguiseGui) return;
 
         event.setCancelled(true);
@@ -53,12 +54,67 @@ public class GuiListener implements Listener {
         ItemStack currentItem = event.getCurrentItem();
         if (currentItem == null || currentItem.getType() == Material.AIR) return;
 
-        if (title.equals(rankTitle)) {
+        if (title.equals(mainTitle)) {
+            handleMainSelection(player, currentItem);
+        } else if (title.equals(rankTitle)) {
             handleRankSelection(player, currentItem);
         } else if (title.equals(skinTitle)) {
             handleSkinSelection(player, currentItem);
         } else if (title.equals(confirmTitle)) {
             handleConfirmation(player, currentItem);
+        }
+    }
+
+    private void handleMainSelection(Player player, ItemStack item) {
+        ItemMeta meta = item.getItemMeta();
+        if (meta == null || !meta.hasDisplayName()) return;
+        String displayName = ChatColor.stripColor(meta.getDisplayName());
+
+        Material rankMat = Material.valueOf(plugin.getConfig().getString("gui.main.rank_button.material", "PAPER"));
+        String rankName = ChatColor.stripColor(plugin.color(plugin.getConfig().getString("gui.main.rank_button.name", "Change Rank")));
+
+        Material nameMat = Material.valueOf(plugin.getConfig().getString("gui.main.name_button.material", "NAME_TAG"));
+        String nameName = ChatColor.stripColor(plugin.color(plugin.getConfig().getString("gui.main.name_button.name", "Change Name")));
+
+        Material skinMat = Material.valueOf(plugin.getConfig().getString("gui.main.skin_button.material", "SKULL_ITEM"));
+        String skinName = ChatColor.stripColor(plugin.color(plugin.getConfig().getString("gui.main.skin_button.name", "Change Skin")));
+
+        Material unnickMat = Material.valueOf(plugin.getConfig().getString("gui.main.unnick_button.material", "BARRIER"));
+        String unnickName = ChatColor.stripColor(plugin.color(plugin.getConfig().getString("gui.main.unnick_button.name", "Reset Disguise")));
+
+        Material disguiseMat = Material.valueOf(plugin.getConfig().getString("gui.main.disguise_button.material", "EMERALD_BLOCK"));
+        String disguiseName = ChatColor.stripColor(plugin.color(plugin.getConfig().getString("gui.main.disguise_button.name", "Apply Disguise")));
+
+        if (item.getType() == unnickMat && displayName.contains(unnickName)) {
+            player.closeInventory();
+            playSoundSafe(player, plugin.getConfig().getString("sounds.success", "LEVEL_UP"));
+            plugin.getGuiManager().sessionData.remove(player.getUniqueId());
+            plugin.getDatabaseManager().removeDisguiseData(player.getUniqueId());
+            
+            // Revert name visually using the PlayerListener instance method
+            PlayerListener playerListener = new PlayerListener(plugin);
+            playerListener.changeName(player, player.getName(), "");
+            player.sendMessage(plugin.color(plugin.getConfig().getString("messages.undisguised")));
+            return;
+        }
+
+        if (item.getType() == rankMat && displayName.contains(rankName)) {
+            playSoundSafe(player, plugin.getConfig().getString("sounds.click", "CLICK"));
+            plugin.getGuiManager().openRankSelectionGui(player);
+            return;
+        }
+
+        // Just let them go straight to skin GUI if they click name or skin
+        if ((item.getType() == nameMat && displayName.contains(nameName)) || (item.getType() == skinMat && displayName.contains(skinName))) {
+            playSoundSafe(player, plugin.getConfig().getString("sounds.click", "CLICK"));
+            plugin.getGuiManager().openSkinSelectionGui(player);
+            return;
+        }
+
+        if (item.getType() == disguiseMat && displayName.contains(disguiseName)) {
+            playSoundSafe(player, plugin.getConfig().getString("sounds.click", "CLICK"));
+            plugin.getGuiManager().openConfirmGui(player);
+            return;
         }
     }
 

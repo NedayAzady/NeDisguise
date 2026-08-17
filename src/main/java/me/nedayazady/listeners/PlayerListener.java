@@ -67,17 +67,15 @@ public class PlayerListener implements Listener {
             
             // Execute configured commands to update TAB/Tags plugins
             List<String> commands;
-            if (rank == null || rank.isEmpty()) {
+            boolean isUndisguise = rank == null || rank.isEmpty();
+            if (isUndisguise) {
                 commands = plugin.getConfig().getStringList("on_undisguise_commands");
             } else {
                 commands = plugin.getConfig().getStringList("on_disguise_commands");
             }
             
             for (String cmd : commands) {
-                // Ensure we use the real original name of the player for console commands,
-                // as plugins usually index players by their real name/UUID, not their nick.
-                // In un-nick scenarios where we pass player.getName() as newName, their current name 
-                // in memory IS their original name. But if we have it saved, use it.
+                // Determine original name safely
                 String originalName = player.getName(); 
                 try {
                     DisguiseData dbData = plugin.getDatabaseManager().getDisguiseData(player.getUniqueId()).get();
@@ -86,7 +84,16 @@ public class PlayerListener implements Listener {
                     }
                 } catch (Exception ignored) {}
                 
-                String formattedCmd = cmd.replace("{player}", originalName).replace("{name}", newName);
+                String formattedCmd = cmd.replace("{player}", originalName);
+                if (!isUndisguise) {
+                     formattedCmd = formattedCmd.replace("{name}", newName);
+                }
+                
+                // If it's a tab command to remove the properties, we need to send the command 
+                // formatted correctly for Nezamy TAB, which means NO value argument if it's clear.
+                // Let's ensure no trailing spaces that could cause it to run twice incorrectly.
+                formattedCmd = formattedCmd.trim();
+                
                 Bukkit.getServer().dispatchCommand(Bukkit.getConsoleSender(), formattedCmd);
             }
             

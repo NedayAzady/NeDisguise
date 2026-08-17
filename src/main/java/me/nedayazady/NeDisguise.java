@@ -76,7 +76,7 @@ public class NeDisguise extends JavaPlugin implements CommandExecutor {
             return true;
         }
 
-        guiManager.openRankSelectionGui(player);
+        guiManager.openMainMenu(player);
         return true;
     }
 

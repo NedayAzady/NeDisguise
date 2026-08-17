@@ -45,8 +45,97 @@ public class GuiManager {
         }
     }
 
+    public void openMainMenu(Player player) {
+        // Main menu with 3 options: Rank, Name, Skin + Profile Info
+        ConfigurationSection config = plugin.getConfig().getConfigurationSection("gui.main");
+        if (config == null) {
+            // Fallback default
+            Inventory inv = Bukkit.createInventory(null, 45, plugin.color("&8Disguise Menu"));
+            fillGui(inv, plugin.getConfig().getConfigurationSection("gui"));
+            
+            // Just open rank selection for now if main is missing
+            openRankSelectionGui(player);
+            return;
+        }
+        
+        String title = plugin.color(config.getString("title", "&8Disguise Menu"));
+        int size = config.getInt("size", 45);
+        Inventory inv = Bukkit.createInventory(null, size, title);
+
+        DisguiseData data = sessionData.computeIfAbsent(player.getUniqueId(), k -> new DisguiseData(player.getName(), null, null, null));
+
+        // Rank Button
+        ConfigurationSection rankBtn = config.getConfigurationSection("rank_button");
+        if (rankBtn != null) {
+            inv.setItem(rankBtn.getInt("slot", 11), new ItemBuilder(Material.valueOf(rankBtn.getString("material", "PAPER")))
+                .name(plugin.color(rankBtn.getString("name", "&aChange Rank")))
+                .lore(rankBtn.getStringList("lore").stream().map(plugin::color).collect(Collectors.toList()))
+                .build());
+        }
+
+        // Name Button
+        ConfigurationSection nameBtn = config.getConfigurationSection("name_button");
+        if (nameBtn != null) {
+            inv.setItem(nameBtn.getInt("slot", 13), new ItemBuilder(Material.valueOf(nameBtn.getString("material", "NAME_TAG")))
+                .name(plugin.color(nameBtn.getString("name", "&aChange Name")))
+                .lore(nameBtn.getStringList("lore").stream().map(plugin::color).collect(Collectors.toList()))
+                .build());
+        }
+
+        // Skin Button
+        ConfigurationSection skinBtn = config.getConfigurationSection("skin_button");
+        if (skinBtn != null) {
+            inv.setItem(skinBtn.getInt("slot", 15), new ItemBuilder(Material.valueOf(skinBtn.getString("material", "SKULL_ITEM")))
+                .name(plugin.color(skinBtn.getString("name", "&aChange Skin")))
+                .lore(skinBtn.getStringList("lore").stream().map(plugin::color).collect(Collectors.toList()))
+                .build());
+        }
+
+        // Unnick Button
+        ConfigurationSection unnickBtn = config.getConfigurationSection("unnick_button");
+        if (unnickBtn != null) {
+            inv.setItem(unnickBtn.getInt("slot", 31), new ItemBuilder(Material.valueOf(unnickBtn.getString("material", "BARRIER")))
+                .name(plugin.color(unnickBtn.getString("name", "&cReset Disguise")))
+                .lore(unnickBtn.getStringList("lore").stream().map(plugin::color).collect(Collectors.toList()))
+                .build());
+        }
+        
+        // Disguise Button
+        ConfigurationSection disguiseBtn = config.getConfigurationSection("disguise_button");
+        if (disguiseBtn != null) {
+            inv.setItem(disguiseBtn.getInt("slot", 40), new ItemBuilder(Material.valueOf(disguiseBtn.getString("material", "EMERALD_BLOCK")))
+                .name(plugin.color(disguiseBtn.getString("name", "&aApply Disguise")))
+                .build());
+        }
+
+        // Status Head
+        ConfigurationSection statusBtn = config.getConfigurationSection("status_button");
+        if (statusBtn != null) {
+            String skullTexture = data.getSkin() != null && !data.getSkin().equals("texture_placeholder") ? data.getSkin() : null;
+            String currentName = data.getName() != null ? data.getName() : "None";
+            String currentRank = data.getRank() != null ? data.getRank() : "None";
+            
+            ItemBuilder infoHead = new ItemBuilder(Material.SKULL_ITEM, 1, (short) 3)
+                .name(plugin.color(statusBtn.getString("name", "&eCurrent Status")))
+                .lore(java.util.Arrays.asList(
+                    plugin.color("&7Name: &f" + currentName),
+                    plugin.color("&7Rank: &f" + currentRank)
+                ));
+            
+            if (skullTexture != null) {
+                infoHead.setSkullTexture(skullTexture);
+            } else {
+                infoHead.setSkullOwner(player.getName()); // Default to their real head
+            }
+                
+            inv.setItem(statusBtn.getInt("slot", 4), infoHead.build());
+        }
+
+        fillGui(inv, config);
+        player.openInventory(inv);
+    }
+
     public void openRankSelectionGui(Player player) {
-        int page = rankPage.getOrDefault(player.getUniqueId(), 1);
         ConfigurationSection config = plugin.getConfig().getConfigurationSection("gui.ranks");
         String title = plugin.color(config.getString("title"));
         int size = config.getInt("size");

@@ -40,7 +40,7 @@ public class CommandListener implements Listener {
                     return;
                 }
                 
-                plugin.getGuiManager().openRankSelectionGui(player);
+                plugin.getGuiManager().openMainMenu(player);
                 break;
             }
         }
