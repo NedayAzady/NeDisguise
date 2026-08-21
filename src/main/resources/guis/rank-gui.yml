@@ -1,0 +1,53 @@
+# Disguise Rank Menu
+title: "Disguise: Rank"
+size: 54
+
+items:
+  # The middle slot showing current status
+  status:
+    slot: 4
+    material: PAPER
+    name: "&aCurrent disguise"
+    lore:
+      - "&7Real identity: &f{real_name}"
+      - "&7Status: &f{status}"
+      - "&7Current name: &f{name}"
+      - "&7Rank look: &f{rank}"
+      - "&7Skin: &f{skin}"
+
+  # Bottom row navigation
+  back:
+    slot: 45
+    material: BARRIER
+    name: "&cBack"
+    action: "OPEN_SETUP"
+  
+  unnick:
+    slot: 53
+    material: REDSTONE_BLOCK
+    name: "&cReset Disguise"
+    action: "UNNICK"
+
+  # Compass decor
+  compass:
+    slot: 4
+    material: COMPASS
+    name: " "
+
+  # Default ranks mapping to LuckPerms
+ranks:
+  slots: [10,11,12,13,14] # The paper slots
+  groups:
+    - "default"
+    - "vip"
+    - "pro"
+    - "mvp"
+    - "ace"
+  rank_item:
+    material: PAPER
+    name: "&bRank: &f{group_name}"
+    lore:
+      - "&7Rank: &f{group_name}"
+      - "&7Prefix: &f{prefix}"
+      - "&7Uses current rank styling"
+      - "&eClick to select"

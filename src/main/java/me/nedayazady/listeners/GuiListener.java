@@ -8,6 +8,7 @@ import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
 import org.bukkit.Material;
 import org.bukkit.Sound;
+import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
@@ -15,15 +16,17 @@ import org.bukkit.event.inventory.InventoryClickEvent;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
 
-import java.lang.reflect.Field;
-import java.lang.reflect.Method;
 import java.util.Arrays;
 import java.util.List;
-import java.util.Map;
+import java.util.Random;
 
 public class GuiListener implements Listener {
 
     private final NeDisguise plugin;
+    private final Random random = new Random();
+
+    private final String[] prefixes = {"Pro", "Noob", "xX", "The", "Epic", "Dark", "Ghost", "Ninja", "Super", "Mega", "Ultra", "Fast", "Iron", "Gold", "Shadow", "King", "Wolf"};
+    private final String[] suffixes = {"Gamer", "PVP", "Slayer", "Craft", "Boy", "Girl", "HD", "YT", "MC", "King", "Beast", "Master", "Lord", "Knight", "Hero", "Mine"};
 
     public GuiListener(NeDisguise plugin) {
         this.plugin = plugin;
@@ -33,88 +36,37 @@ public class GuiListener implements Listener {
     public void onInventoryClick(InventoryClickEvent event) {
         if (!(event.getWhoClicked() instanceof Player)) return;
         Player player = (Player) event.getWhoClicked();
-        
+
         String title = ChatColor.stripColor(event.getView().getTitle());
         if (title == null) return;
 
-        String mainTitle = ChatColor.stripColor(plugin.color(plugin.getConfig().getString("gui.main.title", "&8Disguise Menu")));
-        String rankTitle = ChatColor.stripColor(plugin.color(plugin.getConfig().getString("gui.ranks.title")));
-        String skinTitle = ChatColor.stripColor(plugin.color(plugin.getConfig().getString("gui.skins.title")));
-        String confirmTitle = ChatColor.stripColor(plugin.color(plugin.getConfig().getString("gui.confirm.title")));
+        String setupTitle = ChatColor.stripColor(plugin.color(plugin.getConfigManager().getSetupGuiConfig().getString("title", "Disguise: Setup")));
+        String rankTitle = ChatColor.stripColor(plugin.color(plugin.getConfigManager().getRankGuiConfig().getString("title", "Disguise: Rank")));
+        String nameTitle = ChatColor.stripColor(plugin.color(plugin.getConfigManager().getNameGuiConfig().getString("title", "Disguise: Name")));
+        String skinTitle = ChatColor.stripColor(plugin.color(plugin.getConfigManager().getSkinGuiConfig().getString("title", "Disguise: Skin")));
 
-        boolean isDisguiseGui = title.equals(mainTitle) || title.equals(rankTitle) || title.equals(skinTitle) || title.equals(confirmTitle);
-        if (!isDisguiseGui) return;
+        boolean isGui = title.equals(setupTitle) || title.equals(rankTitle) || title.equals(nameTitle) || title.equals(skinTitle);
+        if (!isGui) return;
 
         event.setCancelled(true);
 
         if (event.getRawSlot() >= event.getInventory().getSize() || event.getRawSlot() < 0) {
-            return; // Clicked outside or in player inventory
+            return;
         }
 
-        ItemStack currentItem = event.getCurrentItem();
-        if (currentItem == null || currentItem.getType() == Material.AIR) return;
+        ItemStack item = event.getCurrentItem();
+        if (item == null || item.getType() == Material.AIR) return;
 
-        if (title.equals(mainTitle)) {
-            handleMainSelection(player, currentItem);
+        int slot = event.getRawSlot();
+
+        if (title.equals(setupTitle)) {
+            handleSetupClick(player, slot, item);
         } else if (title.equals(rankTitle)) {
-            handleRankSelection(player, currentItem);
+            handleRankClick(player, slot, item);
+        } else if (title.equals(nameTitle)) {
+            handleNameClick(player, slot, item);
         } else if (title.equals(skinTitle)) {
-            handleSkinSelection(player, currentItem);
-        } else if (title.equals(confirmTitle)) {
-            handleConfirmation(player, currentItem);
-        }
-    }
-
-    private void handleMainSelection(Player player, ItemStack item) {
-        ItemMeta meta = item.getItemMeta();
-        if (meta == null || !meta.hasDisplayName()) return;
-        String displayName = ChatColor.stripColor(meta.getDisplayName());
-
-        Material rankMat = Material.valueOf(plugin.getConfig().getString("gui.main.rank_button.material", "PAPER"));
-        String rankName = ChatColor.stripColor(plugin.color(plugin.getConfig().getString("gui.main.rank_button.name", "Change Rank")));
-
-        Material nameMat = Material.valueOf(plugin.getConfig().getString("gui.main.name_button.material", "NAME_TAG"));
-        String nameName = ChatColor.stripColor(plugin.color(plugin.getConfig().getString("gui.main.name_button.name", "Change Name")));
-
-        Material skinMat = Material.valueOf(plugin.getConfig().getString("gui.main.skin_button.material", "SKULL_ITEM"));
-        String skinName = ChatColor.stripColor(plugin.color(plugin.getConfig().getString("gui.main.skin_button.name", "Change Skin")));
-
-        Material unnickMat = Material.valueOf(plugin.getConfig().getString("gui.main.unnick_button.material", "BARRIER"));
-        String unnickName = ChatColor.stripColor(plugin.color(plugin.getConfig().getString("gui.main.unnick_button.name", "Reset Disguise")));
-
-        Material disguiseMat = Material.valueOf(plugin.getConfig().getString("gui.main.disguise_button.material", "EMERALD_BLOCK"));
-        String disguiseName = ChatColor.stripColor(plugin.color(plugin.getConfig().getString("gui.main.disguise_button.name", "Apply Disguise")));
-
-        if (item.getType() == unnickMat && displayName.contains(unnickName)) {
-            player.closeInventory();
-            playSoundSafe(player, plugin.getConfig().getString("sounds.success", "LEVEL_UP"));
-            plugin.getGuiManager().sessionData.remove(player.getUniqueId());
-            plugin.getDatabaseManager().removeDisguiseData(player.getUniqueId());
-            
-            // Revert name visually using the PlayerListener instance method
-            PlayerListener playerListener = new PlayerListener(plugin);
-            playerListener.changeName(player, player.getName(), "");
-            player.sendMessage(plugin.color(plugin.getConfig().getString("messages.undisguised")));
-            return;
-        }
-
-        if (item.getType() == rankMat && displayName.contains(rankName)) {
-            playSoundSafe(player, plugin.getConfig().getString("sounds.click", "CLICK"));
-            plugin.getGuiManager().openRankSelectionGui(player);
-            return;
-        }
-
-        // Just let them go straight to skin GUI if they click name or skin
-        if ((item.getType() == nameMat && displayName.contains(nameName)) || (item.getType() == skinMat && displayName.contains(skinName))) {
-            playSoundSafe(player, plugin.getConfig().getString("sounds.click", "CLICK"));
-            plugin.getGuiManager().openSkinSelectionGui(player);
-            return;
-        }
-
-        if (item.getType() == disguiseMat && displayName.contains(disguiseName)) {
-            playSoundSafe(player, plugin.getConfig().getString("sounds.click", "CLICK"));
-            plugin.getGuiManager().openConfirmGui(player);
-            return;
+            handleSkinClick(player, slot, item);
         }
     }
 
@@ -122,33 +74,91 @@ public class GuiListener implements Listener {
         try {
             Sound sound = Sound.valueOf(soundName);
             player.playSound(player.getLocation(), sound, 1f, 1f);
-        } catch (IllegalArgumentException e) {
-            // Sound doesn't exist in this version, ignore or log a warning
-            plugin.getLogger().warning("Invalid sound name in config: " + soundName);
+        } catch (Exception ignored) {}
+    }
+
+    private void handleSetupClick(Player player, int slot, ItemStack item) {
+        FileConfiguration config = plugin.getConfigManager().getSetupGuiConfig();
+
+        int closeSlot = config.getInt("items.close.slot", 45);
+        int rankSlot = config.getInt("items.rank_menu.slot", 48);
+        int nameSlot = config.getInt("items.name_menu.slot", 49);
+        int skinSlot = config.getInt("items.skin_menu.slot", 50);
+        int applySlot = config.getInt("items.status.slot", 31);
+
+        if (slot == closeSlot) {
+            player.closeInventory();
+            playSoundSafe(player, plugin.getConfig().getString("sounds.cancel", "NOTE_BASS"));
+        } else if (slot == rankSlot) {
+            playSoundSafe(player, plugin.getConfig().getString("sounds.click", "CLICK"));
+            plugin.getGuiManager().openRankGui(player);
+        } else if (slot == nameSlot) {
+            playSoundSafe(player, plugin.getConfig().getString("sounds.click", "CLICK"));
+            plugin.getGuiManager().openNameGui(player);
+        } else if (slot == skinSlot) {
+            playSoundSafe(player, plugin.getConfig().getString("sounds.click", "CLICK"));
+            plugin.getGuiManager().openSkinGui(player);
+        } else if (slot == applySlot) {
+            // Apply Disguise
+            DisguiseData data = plugin.getGuiManager().sessionData.get(player.getUniqueId());
+            if (data == null) {
+                data = new DisguiseData(player.getName(), null, null, null);
+                plugin.getGuiManager().sessionData.put(player.getUniqueId(), data);
+            }
+
+            // If rank not selected, pick default
+            if (data.getRank() == null) {
+                List<String> groups = plugin.getConfigManager().getRankGuiConfig().getStringList("ranks.groups");
+                if (!groups.isEmpty()) {
+                    data.setRank(groups.get(0));
+                } else {
+                    data.setRank("default");
+                }
+            }
+
+            // If name not selected, pick random
+            if (data.getName() == null) {
+                String prefix = prefixes[random.nextInt(prefixes.length)];
+                String suffix = suffixes[random.nextInt(suffixes.length)];
+                data.setName(prefix + suffix + random.nextInt(99));
+            }
+
+            // If skin not selected, use name
+            if (data.getSkin() == null) {
+                data.setSkin(data.getName());
+            }
+
+            data.setRealName(player.getName());
+            plugin.getDatabaseManager().saveDisguiseData(player.getUniqueId(), data);
+
+            PlayerListener listener = new PlayerListener(plugin);
+            listener.changeName(player, data.getName(), data.getRank());
+
+            player.closeInventory();
+            player.sendMessage(plugin.color(plugin.getConfig().getString("messages.disguised")
+                    .replace("{name}", data.getName())
+                    .replace("{rank}", data.getRank())));
+            playSoundSafe(player, plugin.getConfig().getString("sounds.success", "LEVEL_UP"));
         }
     }
 
-    private void handleRankSelection(Player player, ItemStack item) {
-        ItemMeta meta = item.getItemMeta();
-        if (meta == null || !meta.hasDisplayName()) return;
-        String displayName = ChatColor.stripColor(meta.getDisplayName());
-        
-        Material nextMat = Material.valueOf(plugin.getConfig().getString("gui.ranks.next_button.material", "ARROW"));
-        Material prevMat = Material.valueOf(plugin.getConfig().getString("gui.ranks.previous_button.material", "ARROW"));
-        Material cancelMat = Material.valueOf(plugin.getConfig().getString("gui.ranks.cancel_button.material"));
-        Material unnickMat = Material.valueOf(plugin.getConfig().getString("gui.ranks.unnick_button.material", "BARRIER"));
-        
-        String nextName = ChatColor.stripColor(plugin.color(plugin.getConfig().getString("gui.ranks.next_button.name", "Next")));
-        String prevName = ChatColor.stripColor(plugin.color(plugin.getConfig().getString("gui.ranks.previous_button.name", "Previous")));
-        String cancelName = ChatColor.stripColor(plugin.color(plugin.getConfig().getString("gui.ranks.cancel_button.name")));
-        String unnickName = ChatColor.stripColor(plugin.color(plugin.getConfig().getString("gui.ranks.unnick_button.name", "Reset Disguise")));
+    private void handleRankClick(Player player, int slot, ItemStack item) {
+        FileConfiguration config = plugin.getConfigManager().getRankGuiConfig();
 
-        if (item.getType() == unnickMat && displayName.contains(unnickName)) {
+        int backSlot = config.getInt("items.back.slot", 45);
+        int unnickSlot = config.getInt("items.unnick.slot", 53);
+
+        if (slot == backSlot) {
+            playSoundSafe(player, plugin.getConfig().getString("sounds.click", "CLICK"));
+            plugin.getGuiManager().openSetupGui(player);
+            return;
+        }
+
+        if (slot == unnickSlot) {
             player.closeInventory();
             playSoundSafe(player, plugin.getConfig().getString("sounds.success", "LEVEL_UP"));
             plugin.getGuiManager().sessionData.remove(player.getUniqueId());
-            
-            // Try to get original name before we delete the data
+
             String originalName = player.getName();
             try {
                 DisguiseData dbData = plugin.getDatabaseManager().getDisguiseData(player.getUniqueId()).get();
@@ -156,280 +166,111 @@ public class GuiListener implements Listener {
                     originalName = dbData.getRealName();
                 }
             } catch (Exception ignored) {}
-            
+
             plugin.getDatabaseManager().removeDisguiseData(player.getUniqueId());
-            
-            // Execute configured commands to update TAB/Tags plugins
-            List<String> commands = plugin.getConfig().getStringList("on_undisguise_commands");
-            for (String cmd : commands) {
-                String formattedCmd = cmd.replace("{player}", originalName);
-                Bukkit.getServer().dispatchCommand(Bukkit.getConsoleSender(), formattedCmd);
-            }
-            
-            // Revert name visually using the PlayerListener instance method to keep it central
-            // Pass empty string for rank since it's an unnick
-            PlayerListener playerListener = new PlayerListener(plugin);
-            playerListener.changeName(player, originalName, "");
+
+            PlayerListener listener = new PlayerListener(plugin);
+            listener.changeName(player, originalName, "");
             player.sendMessage(plugin.color(plugin.getConfig().getString("messages.undisguised")));
             return;
         }
 
-        if (item.getType() == cancelMat && displayName.contains(cancelName)) {
-            player.closeInventory();
-            playSoundSafe(player, plugin.getConfig().getString("sounds.cancel", "NOTE_BASS"));
-            plugin.getGuiManager().sessionData.remove(player.getUniqueId());
-            return;
-        }
+        List<Integer> rankSlots = config.getIntegerList("ranks.slots");
+        List<String> groups = config.getStringList("ranks.groups");
 
-        if (item.getType() == nextMat && displayName.contains(nextName)) {
-            playSoundSafe(player, plugin.getConfig().getString("sounds.click", "CLICK"));
-            int page = plugin.getGuiManager().rankPage.getOrDefault(player.getUniqueId(), 1);
-            plugin.getGuiManager().rankPage.put(player.getUniqueId(), page + 1);
-            plugin.getGuiManager().openRankSelectionGui(player);
-            return;
-        }
-        
-        if (item.getType() == prevMat && displayName.contains(prevName)) {
-            playSoundSafe(player, plugin.getConfig().getString("sounds.click", "CLICK"));
-            int page = plugin.getGuiManager().rankPage.getOrDefault(player.getUniqueId(), 1);
-            plugin.getGuiManager().rankPage.put(player.getUniqueId(), page - 1);
-            plugin.getGuiManager().openRankSelectionGui(player);
-            return;
-        }
-
-        if (item.getType() == Material.PAPER) {
-            // It's a rank
-            List<String> groups = plugin.getConfig().getStringList("gui.ranks.groups");
-            String selectedGroup = null;
-            
-            // Very basic matching, assuming format "{prefix} {group_name}"
-            for (String group : groups) {
-                if (displayName.toLowerCase().contains(group.toLowerCase())) {
-                    selectedGroup = group;
-                    break;
-                }
-            }
-            
-            if (selectedGroup != null) {
-                DisguiseData data = plugin.getGuiManager().sessionData.get(player.getUniqueId());
-                if (data != null) {
-                    data.setRank(selectedGroup);
-                    playSoundSafe(player, plugin.getConfig().getString("sounds.click", "CLICK"));
-                    plugin.getGuiManager().openSkinSelectionGui(player);
-                }
+        for (int i = 0; i < rankSlots.size() && i < groups.size(); i++) {
+            if (slot == rankSlots.get(i)) {
+                String selectedGroup = groups.get(i);
+                DisguiseData data = plugin.getGuiManager().sessionData.computeIfAbsent(player.getUniqueId(), k -> new DisguiseData(player.getName(), null, null, null));
+                data.setRank(selectedGroup);
+                playSoundSafe(player, plugin.getConfig().getString("sounds.click", "CLICK"));
+                plugin.getGuiManager().openSetupGui(player);
+                return;
             }
         }
     }
 
-    private void handleSkinSelection(Player player, ItemStack item) {
-        ItemMeta meta = item.getItemMeta();
-        if (meta == null || !meta.hasDisplayName()) return;
-        String displayName = ChatColor.stripColor(meta.getDisplayName());
+    private void handleNameClick(Player player, int slot, ItemStack item) {
+        FileConfiguration config = plugin.getConfigManager().getNameGuiConfig();
 
-        Material customMat = Material.valueOf(plugin.getConfig().getString("gui.skins.custom_name_button.material"));
-        String customNameStr = ChatColor.stripColor(plugin.color(plugin.getConfig().getString("gui.skins.custom_name_button.name")));
-        
-        Material randomMat = Material.valueOf(plugin.getConfig().getString("gui.skins.random_name_button.material", "COMMAND"));
-        String randomNameStr = ChatColor.stripColor(plugin.color(plugin.getConfig().getString("gui.skins.random_name_button.name", "Random Name")));
-        
-        Material nextMat = Material.valueOf(plugin.getConfig().getString("gui.skins.next_button.material", "ARROW"));
-        Material prevMat = Material.valueOf(plugin.getConfig().getString("gui.skins.previous_button.material", "ARROW"));
-        Material backMat = Material.valueOf(plugin.getConfig().getString("gui.skins.back_button.material", "BARRIER"));
-        
-        String nextName = ChatColor.stripColor(plugin.color(plugin.getConfig().getString("gui.skins.next_button.name", "Next")));
-        String prevName = ChatColor.stripColor(plugin.color(plugin.getConfig().getString("gui.skins.previous_button.name", "Previous")));
-        String backName = ChatColor.stripColor(plugin.color(plugin.getConfig().getString("gui.skins.back_button.name", "Back")));
+        int backSlot = config.getInt("items.back.slot", 45);
+        int customSlot = config.getInt("items.custom_name.slot", 30);
+        int randomSlot = config.getInt("items.random_name.slot", 32);
 
-        if (item.getType() == nextMat && displayName.contains(nextName)) {
+        if (slot == backSlot) {
             playSoundSafe(player, plugin.getConfig().getString("sounds.click", "CLICK"));
-            int page = plugin.getGuiManager().skinPage.getOrDefault(player.getUniqueId(), 1);
-            plugin.getGuiManager().skinPage.put(player.getUniqueId(), page + 1);
-            plugin.getGuiManager().openSkinSelectionGui(player);
-            return;
-        }
-        
-        if (item.getType() == prevMat && displayName.contains(prevName)) {
-            playSoundSafe(player, plugin.getConfig().getString("sounds.click", "CLICK"));
-            int page = plugin.getGuiManager().skinPage.getOrDefault(player.getUniqueId(), 1);
-            plugin.getGuiManager().skinPage.put(player.getUniqueId(), page - 1);
-            plugin.getGuiManager().openSkinSelectionGui(player);
-            return;
-        }
-        
-        if (item.getType() == backMat && displayName.contains(backName)) {
-            playSoundSafe(player, plugin.getConfig().getString("sounds.click", "CLICK"));
-            plugin.getGuiManager().openRankSelectionGui(player);
+            plugin.getGuiManager().openSetupGui(player);
             return;
         }
 
-        if (item.getType() == randomMat && displayName.contains(randomNameStr)) {
+        if (slot == randomSlot) {
+            String prefix = prefixes[random.nextInt(prefixes.length)];
+            String suffix = suffixes[random.nextInt(suffixes.length)];
+            String randName = prefix + suffix + random.nextInt(99);
+
+            DisguiseData data = plugin.getGuiManager().sessionData.computeIfAbsent(player.getUniqueId(), k -> new DisguiseData(player.getName(), null, null, null));
+            data.setName(randName);
+
+            playSoundSafe(player, plugin.getConfig().getString("sounds.click", "CLICK"));
+            plugin.getGuiManager().openNameGui(player);
+            return;
+        }
+
+        if (slot == customSlot) {
             player.closeInventory();
             playSoundSafe(player, plugin.getConfig().getString("sounds.click", "CLICK"));
-            
-            // Get random name and skin
-            java.util.List<java.util.Map<?, ?>> skins = plugin.getConfig().getMapList("gui.skins.available_skins");
-            
-            // Filter out the random button from the list itself if it's there
-            java.util.List<java.util.Map<?, ?>> actualSkins = new java.util.ArrayList<>();
-            for (java.util.Map<?, ?> skinMap : skins) {
-                if (!skinMap.containsKey("is_random") || !(Boolean)skinMap.get("is_random")) {
-                    actualSkins.add(skinMap);
-                }
-            }
-            
-            if (!actualSkins.isEmpty()) {
-                int randomIndex = new java.util.Random().nextInt(actualSkins.size());
-                java.util.Map<?, ?> randomSkin = actualSkins.get(randomIndex);
-                
-                String[] prefixes = {"Pro", "Noob", "xX", "The", "Epic", "Dark", "Ghost", "Ninja", "Super", "Mega", "Ultra", "Fast", "Iron", "Gold"};
-                String[] suffixes = {"Gamer", "PVP", "Slayer", "Craft", "Boy", "Girl", "HD", "YT", "MC", "King", "Beast", "Master", "Lord"};
-                String prefix = prefixes[(int) (Math.random() * prefixes.length)];
-                String suffix = suffixes[(int) (Math.random() * suffixes.length)];
-                String generatedName = prefix + suffix + (int)(Math.random() * 99);
-                
-                String generatedTexture = (String) randomSkin.get("texture");
-                
-                DisguiseData data = plugin.getGuiManager().sessionData.get(player.getUniqueId());
-                if (data != null) {
-                    data.setName(generatedName);
-                    data.setSkin(generatedTexture);
-                    Bukkit.getScheduler().runTask(plugin, () -> plugin.getGuiManager().openConfirmGui(player));
-                }
-            } else {
-                player.sendMessage(plugin.color("&cNo skins configured for randomizer."));
-            }
-            return;
-        }
 
-        if (item.getType() == customMat && displayName.contains(customNameStr)) {
-            player.closeInventory();
-            playSoundSafe(player, plugin.getConfig().getString("sounds.click", "CLICK"));
-            
-            // Open Sign GUI for custom name input
             SignGUI.builder()
                     .setLines(new String[]{"", "^^^^^^^^^^^^^^^", "Enter a name", "for your disguise"})
                     .setType(Material.SIGN_POST)
                     .setHandler((p, result) -> {
                         String nameInput = result.getLineWithoutColor(0).trim();
-                        
+
                         if (nameInput.isEmpty()) {
                             return Arrays.asList(SignGUIAction.run(() -> p.sendMessage(plugin.color("&cName cannot be empty."))));
                         }
-                        
+
                         if (nameInput.length() > 16) {
                             return Arrays.asList(SignGUIAction.run(() -> p.sendMessage(plugin.color(plugin.getConfig().getString("messages.name_too_long")))));
                         }
-                        
+
                         if (!nameInput.matches("^[a-zA-Z0-9_]+$")) {
                             return Arrays.asList(SignGUIAction.run(() -> p.sendMessage(plugin.color(plugin.getConfig().getString("messages.invalid_name")))));
                         }
-                        
-                        DisguiseData data = plugin.getGuiManager().sessionData.get(p.getUniqueId());
-                        if (data != null) {
-                            data.setName(nameInput);
-                            return Arrays.asList(SignGUIAction.run(() -> {
-                                Bukkit.getScheduler().runTask(plugin, () -> plugin.getGuiManager().openConfirmGui(p));
-                            }));
-                        }
-                        return Arrays.asList();
+
+                        DisguiseData data = plugin.getGuiManager().sessionData.computeIfAbsent(p.getUniqueId(), k -> new DisguiseData(p.getName(), null, null, null));
+                        data.setName(nameInput);
+
+                        return Arrays.asList(SignGUIAction.run(() -> {
+                            Bukkit.getScheduler().runTask(plugin, () -> plugin.getGuiManager().openSetupGui(p));
+                        }));
                     })
                     .build()
                     .open(player);
-            return;
-        }
-        
-        // It's a head
-        if (item.getType() == Material.SKULL_ITEM) {
-            DisguiseData data = plugin.getGuiManager().sessionData.get(player.getUniqueId());
-            if (data != null) {
-                // If they clicked random, generate a random name and pick a random skin
-                if (displayName.contains("Random Name")) {
-                    String[] prefixes = {"Pro", "Noob", "xX", "The", "Epic", "Dark", "Ghost", "Ninja", "Super", "Mega", "Ultra", "Fast", "Iron", "Gold"};
-                    String[] suffixes = {"Gamer", "PVP", "Slayer", "Craft", "Boy", "Girl", "HD", "YT", "MC", "King", "Beast", "Master", "Lord"};
-                    String prefix = prefixes[(int) (Math.random() * prefixes.length)];
-                    String suffix = suffixes[(int) (Math.random() * suffixes.length)];
-                    String randomName = prefix + suffix + (int)(Math.random() * 99);
-                    
-                    data.setName(randomName);
-                    
-                    // Assign random texture from config
-                    List<Map<?, ?>> skins = plugin.getConfig().getMapList("gui.skins.available_skins");
-                    // Collect valid skins (not the random button itself)
-                    java.util.List<Map<?, ?>> actualSkins = new java.util.ArrayList<>();
-                    for (Map<?, ?> skinMap : skins) {
-                        if (!skinMap.containsKey("is_random") || !(Boolean)skinMap.get("is_random")) {
-                            actualSkins.add(skinMap);
-                        }
-                    }
-                    if (!actualSkins.isEmpty()) {
-                        Map<?, ?> randomSkin = actualSkins.get(new java.util.Random().nextInt(actualSkins.size()));
-                        data.setSkin((String) randomSkin.get("texture"));
-                    } else {
-                        data.setSkin("texture_placeholder");
-                    }
-                } else {
-                    data.setName(displayName);
-                    // Get texture from the clicked item
-                    String foundTexture = "texture_placeholder";
-                    List<Map<?, ?>> skins = plugin.getConfig().getMapList("gui.skins.available_skins");
-                    for (Map<?, ?> skinInfo : skins) {
-                        if (skinInfo.get("name").equals(displayName)) {
-                            foundTexture = (String) skinInfo.get("texture");
-                            break;
-                        }
-                    }
-                    data.setSkin(foundTexture); 
-                }
-                
-                playSoundSafe(player, plugin.getConfig().getString("sounds.click", "CLICK"));
-                plugin.getGuiManager().openConfirmGui(player);
-            }
         }
     }
-    
-    private void handleConfirmation(Player player, ItemStack item) {
-        ItemMeta meta = item.getItemMeta();
-        if (meta == null || !meta.hasDisplayName()) return;
-        String displayName = ChatColor.stripColor(meta.getDisplayName());
 
-        Material confirmMat = Material.valueOf(plugin.getConfig().getString("gui.confirm.confirm_button.material"));
-        Material cancelMat = Material.valueOf(plugin.getConfig().getString("gui.confirm.cancel_button.material"));
-        
-        String confirmNameStr = ChatColor.stripColor(plugin.color(plugin.getConfig().getString("gui.confirm.confirm_button.name")));
-        String cancelNameStr = ChatColor.stripColor(plugin.color(plugin.getConfig().getString("gui.confirm.cancel_button.name")));
+    private void handleSkinClick(Player player, int slot, ItemStack item) {
+        FileConfiguration config = plugin.getConfigManager().getSkinGuiConfig();
 
-        if (item.getType() == cancelMat && displayName.contains(cancelNameStr)) {
-            player.closeInventory();
-            playSoundSafe(player, plugin.getConfig().getString("sounds.cancel", "NOTE_BASS"));
-            plugin.getGuiManager().sessionData.remove(player.getUniqueId());
-            player.sendMessage(plugin.color(plugin.getConfig().getString("messages.cancel_disguise")));
+        int backSlot = config.getInt("items.back.slot", 45);
+        int randomSlot = config.getInt("items.random_skin.slot", 31);
+
+        if (slot == backSlot) {
+            playSoundSafe(player, plugin.getConfig().getString("sounds.click", "CLICK"));
+            plugin.getGuiManager().openSetupGui(player);
             return;
         }
 
-        if (item.getType() == confirmMat && displayName.contains(confirmNameStr)) {
-            DisguiseData data = plugin.getGuiManager().sessionData.get(player.getUniqueId());
-            if (data != null && data.getName() != null && data.getRank() != null) {
-                player.closeInventory();
-                
-                // Set their original real name before saving
-                data.setRealName(player.getName());
-                
-                plugin.getDatabaseManager().saveDisguiseData(player.getUniqueId(), data);
-                
-                String msg = plugin.getConfig().getString("messages.disguised")
-                        .replace("{name}", data.getName())
-                        .replace("{rank}", data.getRank());
-                
-                PlayerListener playerListener = new PlayerListener(plugin);
-                playerListener.changeName(player, data.getName(), data.getRank());
-                player.sendMessage(plugin.color(msg));
-                playSoundSafe(player, plugin.getConfig().getString("sounds.success", "LEVEL_UP"));
-                
-                // Reset pages for next time
-                plugin.getGuiManager().rankPage.put(player.getUniqueId(), 1);
-                plugin.getGuiManager().skinPage.put(player.getUniqueId(), 1);
-                plugin.getGuiManager().sessionData.remove(player.getUniqueId());
-            }
+        if (slot == randomSlot) {
+            String[] skins = {"Notch", "Dinnerbone", "Dream", "Technoblade", "TommyInnit", "Grian", "MumboJumbo", "DanTDM", "Steve", "Alex"};
+            String randSkin = skins[random.nextInt(skins.length)];
+
+            DisguiseData data = plugin.getGuiManager().sessionData.computeIfAbsent(player.getUniqueId(), k -> new DisguiseData(player.getName(), null, null, null));
+            data.setSkin(randSkin);
+
+            playSoundSafe(player, plugin.getConfig().getString("sounds.click", "CLICK"));
+            plugin.getGuiManager().openSkinGui(player);
         }
     }
 }

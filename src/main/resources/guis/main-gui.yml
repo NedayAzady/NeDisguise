@@ -1,0 +1,60 @@
+title: "&8Disguise: Setup"
+size: 54
+
+filler:
+  material: STAINED_GLASS_PANE
+  data: 15
+  name: " "
+
+items:
+  status_head:
+    slot: 4
+    material: SKULL_ITEM
+    data: 3
+    name: "&aCurrent disguise"
+    lore:
+      - "&7Real identity: &f{real_name}"
+      - "&7Status: &f{status}"
+      - "&7Current name: &f{current_name}"
+      - "&7Rank look: &f{current_rank}"
+      - "&7Skin: &f{current_skin}"
+
+  rank_button:
+    slot: 22
+    material: PAPER
+    name: "&bChange Rank"
+    lore:
+      - "&7Click to select a rank"
+      - "&7for your disguise."
+
+  name_button:
+    slot: 24
+    material: NAME_TAG
+    name: "&eChange Name"
+    lore:
+      - "&7Click to select a name"
+      - "&7for your disguise."
+
+  skin_button:
+    slot: 26
+    material: SKULL_ITEM
+    data: 3
+    name: "&dChange Skin"
+    lore:
+      - "&7Click to select a skin"
+      - "&7for your disguise."
+
+  apply_button:
+    slot: 49
+    material: EMERALD_BLOCK
+    name: "&aApply Disguise"
+    lore:
+      - "&7Click to confirm"
+
+  unnick_button:
+    slot: 53
+    material: BARRIER
+    name: "&cReset Disguise"
+    lore:
+      - "&7Click to remove your"
+      - "&7current disguise."

@@ -1,0 +1,42 @@
+# Disguise Name Menu
+title: "Disguise: Name"
+size: 54
+
+items:
+  # Bottom row navigation
+  back:
+    slot: 45
+    material: BARRIER
+    name: "&cBack"
+    action: "OPEN_SETUP"
+
+  # Compass decor
+  compass:
+    slot: 4
+    material: COMPASS
+    name: " "
+
+  custom_name:
+    slot: 30
+    material: NAME_TAG
+    name: "&eCustom Name"
+    lore:
+      - "&7Click to type a custom name."
+    action: "CUSTOM_NAME"
+
+  random_name:
+    slot: 32
+    material: PAPER
+    name: "&dRandom Name"
+    lore:
+      - "&7Current name: &f{name}"
+      - "&eClick to roll a safe name."
+    action: "RANDOM_NAME"
+
+  # Filler heads
+  history_heads:
+    slots: [10,11,12,13,14,15,16,19,20,21,22,23,24,25]
+    material: SKULL_ITEM
+    data: 3
+    name: "&8?"
+    texture: "eyJ0ZXh0dXJlcyI6eyJTS0lOIjp7InVybCI6Imh0dHA6Ly90ZXh0dXJlcy5taW5lY3JhZnQubmV0L3RleHR1cmUvYmFkYzA0OGE3Y2U3OGY3ZGFkNzJhMDdkYTI3ZDg1YzA5MTY4ODFlNTUyMmVlZWQxZTNkYWYyMTdhMzhjMWEifX19"

@@ -1,10 +1,15 @@
 package me.nedayazady;
 
+import me.nedayazady.commands.AdminCommand;
+import me.nedayazady.commands.RedisguiseCommand;
+import me.nedayazady.commands.UndisguiseCommand;
+import me.nedayazady.commands.UserCommand;
 import me.nedayazady.database.DatabaseManager;
 import me.nedayazady.gui.GuiManager;
 import me.nedayazady.listeners.CommandListener;
 import me.nedayazady.listeners.GuiListener;
 import me.nedayazady.listeners.PlayerListener;
+import me.nedayazady.managers.ConfigManager;
 import net.luckperms.api.LuckPerms;
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
@@ -20,15 +25,13 @@ public class NeDisguise extends JavaPlugin implements CommandExecutor {
     private static NeDisguise instance;
     private LuckPerms luckPerms;
     private DatabaseManager databaseManager;
+    private ConfigManager configManager;
     private GuiManager guiManager;
-    private String permission;
 
     @Override
     public void onEnable() {
         instance = this;
         saveDefaultConfig();
-        
-        permission = getConfig().getString("permission", "disguise.perm");
 
         // Hook LuckPerms
         RegisteredServiceProvider<LuckPerms> provider = Bukkit.getServicesManager().getRegistration(LuckPerms.class);
@@ -40,6 +43,7 @@ public class NeDisguise extends JavaPlugin implements CommandExecutor {
             return;
         }
 
+        configManager = new ConfigManager(this);
         databaseManager = new DatabaseManager(this);
         guiManager = new GuiManager(this);
 
@@ -48,8 +52,12 @@ public class NeDisguise extends JavaPlugin implements CommandExecutor {
         getServer().getPluginManager().registerEvents(new CommandListener(this), this);
         getServer().getPluginManager().registerEvents(new PlayerListener(this), this);
 
-        // Register Command
+        // Register Commands
         getCommand("disguise").setExecutor(this);
+        getCommand("undisguise").setExecutor(new UndisguiseCommand(this));
+        getCommand("redisguise").setExecutor(new RedisguiseCommand(this));
+        getCommand("user").setExecutor(new UserCommand(this));
+        getCommand("disguiseadmin").setExecutor(new AdminCommand(this));
 
         getLogger().info("NeDisguise has been enabled!");
     }
@@ -71,12 +79,12 @@ public class NeDisguise extends JavaPlugin implements CommandExecutor {
 
         Player player = (Player) sender;
         
-        if (!player.hasPermission(permission)) {
+        if (!player.hasPermission("core.command.disguise")) {
             player.sendMessage(color(getConfig().getString("messages.no_permission")));
             return true;
         }
 
-        guiManager.openMainMenu(player);
+        guiManager.openSetupGui(player);
         return true;
     }
 
@@ -90,6 +98,10 @@ public class NeDisguise extends JavaPlugin implements CommandExecutor {
 
     public DatabaseManager getDatabaseManager() {
         return databaseManager;
+    }
+
+    public ConfigManager getConfigManager() {
+        return configManager;
     }
 
     public GuiManager getGuiManager() {

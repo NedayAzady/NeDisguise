@@ -1,0 +1,54 @@
+# Disguise Setup (Main Menu)
+title: "Disguise: Setup"
+size: 54
+
+items:
+  # The middle slot showing current status
+  status:
+    slot: 31
+    material: EMERALD
+    name: "&aApply disguise"
+    lore:
+      - "&7Rank: &f{rank}"
+      - "&7Name: &f{name}"
+      - "&7Skin: &f{skin}"
+
+  # Bottom row navigation
+  close:
+    slot: 45
+    material: BARRIER
+    name: "&cClose"
+    action: "CLOSE"
+  
+  rank_menu:
+    slot: 48
+    material: PAPER
+    name: "&bSelect Rank"
+    action: "OPEN_RANK"
+    
+  name_menu:
+    slot: 49
+    material: NAME_TAG
+    name: "&eSelect Name"
+    action: "OPEN_NAME"
+    
+  skin_menu:
+    slot: 50
+    material: SKULL_ITEM
+    data: 3
+    name: "&6Select Skin"
+    action: "OPEN_SKIN"
+
+  # Top decoration
+  compass:
+    slot: 4
+    material: COMPASS
+    name: " "
+
+  # Random history heads (just decoration for now to match the screenshot)
+  history_heads:
+    slots: [10,11,12,13,14,15,16,19,20,21,22,23,24,25,28,29,30,32,33,34,35]
+    material: SKULL_ITEM
+    data: 3
+    name: "&8?"
+    texture: "eyJ0ZXh0dXJlcyI6eyJTS0lOIjp7InVybCI6Imh0dHA6Ly90ZXh0dXJlcy5taW5lY3JhZnQubmV0L3RleHR1cmUvYmFkYzA0OGE3Y2U3OGY3ZGFkNzJhMDdkYTI3ZDg1YzA5MTY4ODFlNTUyMmVlZWQxZTNkYWYyMTdhMzhjMWEifX19"

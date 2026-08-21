@@ -5,5 +5,19 @@ api-version: 1.13
 depend: [LuckPerms]
 commands:
   disguise:
-    description: Opens the disguise GUI
+    description: Opens the disguise menu.
+    permission: core.command.disguise
     aliases: [nick]
+  undisguise:
+    description: Removes your current disguise.
+    permission: core.command.undisguise
+    aliases: [unnick]
+  redisguise:
+    description: Reapplies your previous disguise.
+    permission: core.command.redisguise
+  user:
+    description: Rank disguises a player.
+    permission: core.command.user.disguise
+  disguiseadmin:
+    description: Admin disguise commands.
+    permission: core.command.disguiseadmin

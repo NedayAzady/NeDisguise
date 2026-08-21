@@ -46,7 +46,6 @@ public class PlayerListener implements Listener {
 
     @EventHandler
     public void onPlayerQuit(PlayerQuitEvent event) {
-        plugin.getGuiManager().awaitingChatInput.remove(event.getPlayer().getUniqueId());
         plugin.getGuiManager().sessionData.remove(event.getPlayer().getUniqueId());
     }
     
